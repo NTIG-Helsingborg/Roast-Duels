@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+.panelContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}

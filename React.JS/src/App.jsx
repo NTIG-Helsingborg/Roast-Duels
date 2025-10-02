@@ -5,10 +5,12 @@ import Leaderboard from './components/Leaderboard'
 
 function App() {
   return (
-    <div>
+    <div style={{padding: '20px'}}>
       <h1>Roast Battle Game</h1>
-      <GamePanel />
-      <Leaderboard />
+      <div className='panelContainer'>
+        <GamePanel />
+        <Leaderboard />
+      </div>
     </div>
   )
 }
