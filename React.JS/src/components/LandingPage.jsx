@@ -1,5 +1,5 @@
 import React from 'react'
-import './LandingPage.css'
+import './Components.css'
 
 function LandingPage({ onStartGame }) {
   return (
@@ -7,10 +7,10 @@ function LandingPage({ onStartGame }) {
       <div className="simple-container">
         <h1 className="game-title">Roast Battle</h1>
         <div className="button-container">
-          <button className="game-button" onClick={onStartGame}>
+          <button className="btn-primary game-button" onClick={onStartGame}>
             Multiplayer
           </button>
-          <button className="game-button" onClick={onStartGame}>
+          <button className="btn-primary game-button" onClick={onStartGame}>
             Single Player
           </button>
         </div>

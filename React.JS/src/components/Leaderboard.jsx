@@ -1,9 +1,9 @@
 import React from 'react';
-import './Leaderboard.css';
+import './Components.css';
 
 function Leaderboard() {
   return (
-    <div className="leaderboard">
+    <div className="component-container leaderboard">
       <h2>Leaderboard</h2>
       
       <div className="leaderboard-entries">

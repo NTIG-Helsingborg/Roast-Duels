@@ -1,10 +1,10 @@
 import React from 'react';
-import './GamePanel.css';
+import './Components.css';
 
 // Minimal GamePanel component
 function GamePanel() {
   return (
-    <div className="game-panel">
+    <div className="component-container game-panel">
       <h2>Game Panel</h2>
       
       <div className="input-group">
@@ -16,7 +16,7 @@ function GamePanel() {
         />
       </div>
       
-      <button>Submit Roast</button>
+      <button className="btn-primary">Submit Roast</button>
     </div>
   );
 }

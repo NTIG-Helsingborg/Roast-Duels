@@ -8,9 +8,8 @@
 
 .game-container {
   display: flex;
+  align-items: baseline;
   gap: 1.25rem;
-  max-width: 80rem;
-  margin: 0 auto;
   padding: 0 1rem;
 }
 
