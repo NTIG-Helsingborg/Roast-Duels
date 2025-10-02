@@ -3,5 +3,48 @@
 .panelContainer {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 1.25rem;
+}
+
+.game-container {
+  display: flex;
+  gap: 1.25rem;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+
+.back-button {
+  background-color: #1eba1e;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #189918;
+}
+
+@media (max-width: 48rem) {
+  .game-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .back-button {
+    align-self: center;
+  }
 }
