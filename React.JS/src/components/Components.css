@@ -2,17 +2,93 @@
 
 /* Shared button style - used across all components */
 .btn-primary {
-  background-color: #1eba1e;
+  background-color: #30b0cd;
   color: white;
   border: none;
   border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  background-color: #189918;
+  background-color: #278fa6;
+  transform: translateY(-3px);
+}
+
+/* Special styling for landing page buttons */
+.wave-btn {
+  background: linear-gradient(135deg, #30b0cd 0%, #1a6c89 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  padding: 1.2rem 2.5rem;
+  box-shadow: 0 4px 15px rgba(48, 176, 205, 0.4);
+  transition: all 0.4s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 1;
+}
+
+.wave-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #30b0cd 0%, #278fa6 100%);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.wave-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  opacity: 0;
+  z-index: -1;
+  transform: scale(1);
+  animation: ripple 1s infinite;
+}
+
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(15);
+    opacity: 0;
+  }
+}
+
+.wave-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(48, 176, 205, 0.6);
+}
+
+.wave-btn:hover::before {
+  opacity: 1;
+}
+
+.wave-btn:hover::after {
+  opacity: 0.3;
+}
+
+.wave-btn:active {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(48, 176, 205, 0.4);
 }
 
 /* Base container style - shared by game-panel and leaderboard */
@@ -125,14 +201,13 @@
 
 .simple-container {
   text-align: center;
-  background-color: white;
   border-radius: 0.5rem;
   padding: 3rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.1);
+  /* Simple container without blur effects */
 }
 
 .game-title {
-  font-size: 4rem;
+  font-size: 17rem;
   font-weight: 800;
   margin-bottom: 3rem;
   letter-spacing: -0.02em;
@@ -141,10 +216,10 @@
 
 .button-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 1rem;
-  max-width: 20rem;
   margin: 0 auto;
+  justify-content: center;
 }
 
 .game-button {
