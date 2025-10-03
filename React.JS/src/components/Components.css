@@ -16,6 +16,31 @@
   --spray-white: #f8f9fa;
 }
 
+.back-button {
+  padding: 14px 20px;
+  font-size: 18px;
+  width: 100%;
+  background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
+  color: white;
+  border: 3px solid var(--spray-black);
+  border-radius: 0;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 6px 6px 0 var(--spray-black);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  width: 10%;
+  margin-left: 1.5rem;
+}
+
+.back-button:hover {
+  background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--spray-black);
+}
+
 /* Shared button style - used across all components */
 .btn-primary {
   background-color: var(--spray-cyan);
