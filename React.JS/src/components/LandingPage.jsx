@@ -1,19 +1,9 @@
 import React from 'react'
 import './Components.css'
-// Import the background image directly
-import backgroundImg from '../assets/Roast-Battle-Background.webp'
 
 function LandingPage({ onStartGame }) {
-  // Create a style object with the background image
-  const backgroundStyle = {
-    backgroundImage: `url(${backgroundImg})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  }
-  
   return (
-    <div className="landing-page" style={backgroundStyle}>
+    <div className="landing-page">
       <div className="simple-container">
         <div style={{gap: '8rem'}} className="button-container">
           <button 

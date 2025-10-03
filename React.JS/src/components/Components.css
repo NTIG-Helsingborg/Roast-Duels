@@ -191,7 +191,7 @@
 /* LandingPage specific styles */
 .landing-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  /* Removed background-color to allow body background to show through */
   color: #333;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;

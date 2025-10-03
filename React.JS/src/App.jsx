@@ -20,12 +20,11 @@ function App() {
   }
 
   return (
-    <div>
+    <div className="app-wrapper">
       <div className="game-header">
         <button className="back-button" onClick={handleBackToLanding}>
           ← Back to Home
         </button>
-        <h1>Roast Battle Game</h1>
       </div>
       <div className="game-container">
         <GamePanel />
