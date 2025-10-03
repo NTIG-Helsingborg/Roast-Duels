@@ -257,14 +257,29 @@
   position: relative;
 }
 
+/* Custom font loading */
+@font-face {
+  font-family: 'snakehead';
+  src: url('../assets/fonts/snakehead-graffiti.regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .game-title {
   font-size: 20rem;
   margin-bottom: 3rem;
   letter-spacing: -0.02em;
-  color: var(--spray-black);
-  text-shadow: 8px 8px 0 var(--spray-cyan),
-               16px 16px 0 var(--spray-magenta);
-  transform: rotate(-2deg);
+  color: #1ccceb;
+  font-family: snakehead;
+  background: linear-gradient(to bottom, #00d9ff, #0dc6e7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 
+    2px 2px 0px #26c9e8,
+    4px 4px 0px #1fb5d1,
+    6px 6px 0px #18a1ba,
+    8px 8px 15px rgba(0, 0, 0, 0.2);
+  transform: perspective(500px) rotateX(5deg);
 }
 
 .button-container {
