@@ -1,5 +1,13 @@
 /* Components.css - Shared styles for all components */
 
+/* Custom font loading */
+@font-face {
+  font-family: 'snakehead';
+  src: url('../assets/fonts/snakehead-graffiti.regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* Shared button style - used across all components */
 .btn-primary {
   background-color: #30b0cd;
@@ -196,7 +204,9 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: 3rem;
 }
 
 .simple-container {
@@ -207,11 +217,12 @@
 }
 
 .game-title {
-  font-size: 17rem;
-  font-weight: 800;
+  font-size: 20rem;
   margin-bottom: 3rem;
   letter-spacing: -0.02em;
-  color: #333;
+  color: #1ccceb;
+  font-family: snakehead;
+  text-shadow: 0 10px 10px rgba(0, 0, 0, 1);
 }
 
 .button-container {
