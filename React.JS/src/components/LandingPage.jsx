@@ -4,6 +4,7 @@ import './Components.css'
 function LandingPage({ onStartGame }) {
   return (
     <div className="landing-page">
+      <h1 className="game-title">Roast Battles</h1>
       <div className="simple-container">
         <div style={{gap: '8rem'}} className="button-container">
           <button 

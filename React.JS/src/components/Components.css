@@ -245,7 +245,9 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: 3rem;
 }
 
 .simple-container {
@@ -256,8 +258,7 @@
 }
 
 .game-title {
-  font-size: 17rem;
-  font-weight: 800;
+  font-size: 20rem;
   margin-bottom: 3rem;
   letter-spacing: -0.02em;
   color: var(--spray-black);
