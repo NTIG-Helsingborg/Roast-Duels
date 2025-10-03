@@ -5,7 +5,6 @@ import './Components.css';
 function GamePanel() {
   return (
     <div className="component-container game-panel">
-      <h2>Game Panel</h2>
       
       <div className="input-group">
         <label htmlFor="roast-input">Enter your roast:</label>
