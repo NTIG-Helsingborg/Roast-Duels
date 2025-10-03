@@ -1,7 +1,7 @@
 import React from 'react'
 import './Components.css'
 // Import the background image directly
-import backgroundImg from '../assets/Roast-Battle-Background.png'
+import backgroundImg from '../assets/Roast-Battle-Background.webp'
 
 function LandingPage({ onStartGame }) {
   // Create a style object with the background image
