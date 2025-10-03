@@ -33,6 +33,7 @@
   position: relative;
   width: 10%;
   margin-left: 1.5rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .back-button:hover {
@@ -54,6 +55,7 @@
   text-transform: uppercase;
   letter-spacing: 2px;
   box-shadow: 4px 4px 0 var(--spray-black);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .btn-primary:hover {
