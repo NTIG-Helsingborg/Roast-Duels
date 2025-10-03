@@ -54,7 +54,6 @@
   text-transform: uppercase;
   letter-spacing: 3px;
   z-index: 1;
-  transform: rotate(-1deg);
 }
 
 .wave-btn:hover {
@@ -78,7 +77,6 @@
   box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.3);
   height: 87vh;
   position: relative;
-  transform: rotate(-0.5deg);
 }
 
 /* Shared heading style - Graffiti Tag Style */
@@ -266,7 +264,7 @@
 }
 
 .game-title {
-  font-size: 20rem;
+  font-size: 15vw;
   margin-bottom: 3rem;
   letter-spacing: -0.02em;
   color: #1ccceb;
@@ -280,6 +278,7 @@
     6px 6px 0px #18a1ba,
     8px 8px 15px rgba(0, 0, 0, 0.2);
   transform: perspective(500px) rotateX(5deg);
+  text-wrap: nowrap;
 }
 
 .button-container {
