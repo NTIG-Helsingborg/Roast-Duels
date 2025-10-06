@@ -14,7 +14,7 @@ function LandingPage({ onStartGame }) {
               textShadow: '0 2px 4px rgba(0,0,0,0.3)',
               fontFamily: "'Inter', sans-serif"
             }} 
-            onClick={onStartGame}>
+            onClick={() => onStartGame('multiplayer')}>
             Duel
             <span style={{display: 'block', fontSize: '0.9rem', opacity: 0.8, marginTop: '5px', fontWeight: 'normal'}}>
               Roast a friend
@@ -27,7 +27,7 @@ function LandingPage({ onStartGame }) {
               textShadow: '0 2px 4px rgba(0,0,0,0.3)',
               fontFamily: "'Inter', sans-serif"
             }} 
-            onClick={onStartGame}>
+            onClick={() => onStartGame('single')}>
             Solo
             <span style={{display: 'block', fontSize: '0.9rem', opacity: 0.8, marginTop: '5px', fontWeight: 'normal'}}>
               Set highscores
