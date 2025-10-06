@@ -37,7 +37,9 @@ function LandingPage({ onStartGame }) {
         </div>
       </div>
       <MuteButton />
-      <footer><p>By Mykyta (Mykyta-G), Carl (C4RL-06), Damian (Ghost-With-A-Shoe), Viktor (ViktorAlkbrand)</p></footer>
+      <footer>
+        <p>Made by Mykyta, Carl, Damian & Viktor</p>
+      </footer>
     </div>
   )
 }

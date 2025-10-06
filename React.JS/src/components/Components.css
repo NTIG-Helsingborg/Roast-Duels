@@ -422,9 +422,25 @@
   }
 }
 
-footer p {
-  bottom: 1rem;
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
   text-align: center;
+  padding: 2.5rem 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+footer p {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 1.5px;
+  transition: opacity 0.3s ease;
+}
+
+footer p:hover {
+  opacity: 1;
 }
 
 @media (max-width: 30rem) {
