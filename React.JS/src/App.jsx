@@ -6,8 +6,10 @@ import LandingPage from './components/LandingPage'
 
 function App() {
   const [showGame, setShowGame] = useState(false)
+  const [gameMode, setGameMode] = useState('single')
 
-  const handleStartGame = () => {
+  const handleStartGame = (mode) => {
+    setGameMode(mode)
     setShowGame(true)
   }
 
@@ -27,7 +29,7 @@ function App() {
         </button>
       </div>
       <div className="game-container">
-        <GamePanel />
+        <GamePanel gameMode={gameMode} />
         <Leaderboard />
       </div>
     </div>

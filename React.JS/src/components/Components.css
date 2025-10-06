@@ -44,6 +44,7 @@
 
 /* Shared button style - used across all components */
 .btn-primary {
+  width: 4rem;
   background-color: var(--spray-cyan);
   color: white;
   border: none;
@@ -176,7 +177,7 @@
 .game-panel button {
   padding: 14px 20px;
   font-size: 18px;
-  width: 100%;
+  width: 50%;
   background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
   color: white;
   border: 3px solid var(--spray-black);
@@ -188,6 +189,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  margin: 0 auto;
+  display: block;
 }
 
 .game-panel button:hover {
@@ -198,7 +201,30 @@
 
 .game-panel button:active {
   transform: translate(2px, 2px);
-  box-shadow: 3px 3px 0 var(--spray-black);
+}
+
+.game-panel.multiplayer {
+  width: 90%;
+}
+
+.player-sections {
+  display: flex;
+  gap: 2rem;
+}
+
+.player-section {
+  flex: 1;
+  padding: 1rem;
+}
+
+.player-section h3 {
+  margin: 0 0 1rem 0;
+  color: var(--spray-cyan);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  font-size: 1.2rem;
 }
 
 .leaderboard {
