@@ -15,9 +15,9 @@ function LandingPage({ onStartGame }) {
               fontFamily: "'Inter', sans-serif"
             }} 
             onClick={onStartGame}>
-            Multiplayer
+            Duel
             <span style={{display: 'block', fontSize: '0.9rem', opacity: 0.8, marginTop: '5px', fontWeight: 'normal'}}>
-              Battle online
+              Roast a friend
             </span>
           </button>
           <button 
@@ -28,9 +28,9 @@ function LandingPage({ onStartGame }) {
               fontFamily: "'Inter', sans-serif"
             }} 
             onClick={onStartGame}>
-            Single Player
+            Solo
             <span style={{display: 'block', fontSize: '0.9rem', opacity: 0.8, marginTop: '5px', fontWeight: 'normal'}}>
-              Practice mode
+              Set highscores
             </span>
           </button>
         </div>
