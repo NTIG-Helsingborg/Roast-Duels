@@ -3,6 +3,7 @@ import './App.css'
 import GamePanel from './components/GamePanel'
 import Leaderboard from './components/Leaderboard'
 import LandingPage from './components/LandingPage'
+import MuteButton from './components/MuteButton'
 
 function App() {
   const [showGame, setShowGame] = useState(false)
@@ -27,6 +28,7 @@ function App() {
         <button className="back-button" onClick={handleBackToLanding}>
           ← Back to Home
         </button>
+        <MuteButton />
       </div>
       <div className="game-container">
         <GamePanel gameMode={gameMode} />
