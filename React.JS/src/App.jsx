@@ -8,6 +8,7 @@ import MuteButton from './components/MuteButton'
 function App() {
   const [showGame, setShowGame] = useState(false)
   const [gameMode, setGameMode] = useState('single')
+  const [roasts, setRoasts] = useState([])
 
   const handleStartGame = (mode) => {
     setGameMode(mode)
@@ -16,6 +17,10 @@ function App() {
 
   const handleBackToLanding = () => {
     setShowGame(false)
+  }
+
+  const handleRoastSubmitted = (roastData) => {
+    setRoasts(prevRoasts => [roastData, ...prevRoasts])
   }
 
   if (!showGame) {
@@ -31,8 +36,8 @@ function App() {
         <MuteButton />
       </div>
       <div className="game-container">
-        <GamePanel gameMode={gameMode} />
-        <Leaderboard />
+        <GamePanel onRoastSubmitted={handleRoastSubmitted} />
+        <Leaderboard roasts={roasts} />
       </div>
     </div>
   )
