@@ -1,5 +1,6 @@
 import React from 'react'
 import './Components.css'
+import MuteButton from './MuteButton'
 
 function LandingPage({ onStartGame }) {
   return (
@@ -35,6 +36,8 @@ function LandingPage({ onStartGame }) {
           </button>
         </div>
       </div>
+      <MuteButton />
+      <footer><p>By Mykyta (Mykyta-G), Carl (C4RL-06), Damian (Ghost-With-A-Shoe), Viktor (ViktorAlkbrand)</p></footer>
     </div>
   )
 }

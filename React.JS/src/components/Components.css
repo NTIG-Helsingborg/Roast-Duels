@@ -331,35 +331,26 @@
 
 .mute-btn {
   position: absolute;
-  top: 1rem;
+  bottom: 1rem;
   right: 1rem;
   background: transparent;
   border: none;
-  padding: 0.5rem;
+  padding: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   color: var(--spray-black);
+  z-index: 10;
 }
 
 .mute-btn:hover {
   transform: scale(1.1);
 }
-
-.volume-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-}
-
 .mute-slash {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 24px;
-  height: 3px;
+  width: 48px;
+  height: 6px;
   background: #ff006e;
   transform: translate(-50%, -50%) rotate(-45deg);
   border-radius: 2px;
@@ -429,6 +420,11 @@
   .leaderboard, .game-panel {
     width: 100%;
   }
+}
+
+footer p {
+  bottom: 1rem;
+  text-align: center;
 }
 
 @media (max-width: 30rem) {
