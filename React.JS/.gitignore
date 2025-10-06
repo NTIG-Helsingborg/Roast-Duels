@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Package files
+package-lock.json
+package.json
+
 # Database files
 *.db
 *.sqlite

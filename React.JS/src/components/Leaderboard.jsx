@@ -1,55 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import './Components.css';
 
-function Leaderboard() {
-  const [roasts, setRoasts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchRoasts();
-  }, []);
-
-  const fetchRoasts = async () => {
-    try {
-      const response = await fetch('/api/roasts');
-      if (response.ok) {
-        const data = await response.json();
-        setRoasts(data);
-      } else {
-        console.error('Failed to fetch roasts');
-      }
-    } catch (error) {
-      console.error('Error fetching roasts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="component-container leaderboard">
-        <h2>Leaderboard</h2>
-        <div className="leaderboard-entries">
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
+function Leaderboard({ roasts = [] }) {
+  // Sort roasts by score (highest first) and take top 10
+  const topRoasts = [...roasts]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
 
   return (
     <div className="component-container leaderboard">
       <h2>Leaderboard</h2>
       
       <div className="leaderboard-entries">
-        {roasts.length === 0 ? (
-          <p>No roasts yet. Be the first to submit one!</p>
+        {topRoasts.length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '40px 20px', 
+            opacity: 0.6,
+            fontStyle: 'italic'
+          }}>
+            No roasts yet. Be the first to submit!
+          </div>
         ) : (
-          roasts.map((roast) => (
-            <div key={roast.id} className="leaderboard-entry">
-              <div className="score">{roast.points}</div>
+          topRoasts.map((roast, index) => (
+            <div key={roast.timestamp || index} className="leaderboard-entry">
+              <div className="score">{roast.score}</div>
               <div className="roast-content">
-                <p className="author">{roast.username}</p>
-                <p className="text">{roast.roast}</p>
+                <p className="author">
+                  {index === 0 && '👑 '}
+                  {roast.author}
+                </p>
+                <p className="text">{roast.text}</p>
               </div>
             </div>
           ))

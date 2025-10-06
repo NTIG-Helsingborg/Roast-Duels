@@ -9,6 +9,7 @@ import MusicPlayer from './components/MusicPlayer'
 function App() {
   const [showGame, setShowGame] = useState(false)
   const [gameMode, setGameMode] = useState('single')
+  const [roasts, setRoasts] = useState([])
 
   const handleStartGame = (mode) => {
     setGameMode(mode)
@@ -19,28 +20,27 @@ function App() {
     setShowGame(false)
   }
 
+  const handleRoastSubmitted = (roastData) => {
+    setRoasts(prevRoasts => [roastData, ...prevRoasts])
+  }
+
+  if (!showGame) {
+    return <LandingPage onStartGame={handleStartGame} />
+  }
+
   return (
-    <>
-      {/* Move MusicPlayer here so it never gets unmounted */}
-      <MusicPlayer />
-      
-      {!showGame ? (
-        <LandingPage onStartGame={handleStartGame} />
-      ) : (
-        <div className="app-wrapper">
-          <div className="game-header">
-            <button className="back-button" onClick={handleBackToLanding}>
-              ← Back to Home
-            </button>
-            <MuteButton />
-          </div>
-          <div className="game-container">
-            <GamePanel gameMode={gameMode} />
-            <Leaderboard />
-          </div>
-        </div>
-      )}
-    </>
+    <div className="app-wrapper">
+      <div className="game-header">
+        <button className="back-button" onClick={handleBackToLanding}>
+          ← Back to Home
+        </button>
+        <MuteButton />
+      </div>
+      <div className="game-container">
+        <GamePanel onRoastSubmitted={handleRoastSubmitted} />
+        <Leaderboard roasts={roasts} />
+      </div>
+    </div>
   )
 }
 
