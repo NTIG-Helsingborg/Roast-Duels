@@ -21,6 +21,17 @@ app.use(express.static(path.join(__dirname, '../../dist')));
 const dbPath = path.join(__dirname, 'database.db');
 const db = new Database(dbPath);
 
+// Create table if it doesn't exist
+db.exec(`
+  CREATE TABLE IF NOT EXISTS roasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    points INTEGER NOT NULL,
+    username TEXT NOT NULL,
+    roast TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 // Initialize with sample data if empty
 const countStmt = db.prepare('SELECT COUNT(*) as count FROM roasts');
 const count = countStmt.get().count;
