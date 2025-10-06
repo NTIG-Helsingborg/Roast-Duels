@@ -8,7 +8,7 @@ function GamePanel({ gameMode = 'single' }) {
       <div className="component-container game-panel multiplayer">
         <div className="player-sections">
           <div className="player-section">
-            <h3>Player 1</h3>
+            <h3 className='player1'>Player 1</h3>
             <div className="input-group">
               <label htmlFor="roast-input-p1">Enter your roast:</label>
               <input
@@ -20,7 +20,7 @@ function GamePanel({ gameMode = 'single' }) {
           </div>
           
           <div className="player-section">
-            <h3>Player 2</h3>
+            <h3 className='player2'>Player 2</h3>
             <div className="input-group">
               <label htmlFor="roast-input-p2">Enter your roast:</label>
               <input
@@ -38,6 +38,7 @@ function GamePanel({ gameMode = 'single' }) {
 
   return (
     <div className="component-container game-panel">
+      <h3 className="solo-player">Solo Battle</h3>
       <div className="input-group">
         <label htmlFor="roast-input">Enter your roast:</label>
         <input
