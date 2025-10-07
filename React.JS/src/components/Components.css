@@ -458,6 +458,182 @@ footer p:hover {
   opacity: 1;
 }
 
+/* Dual Game Panel Styles */
+.dual-game-layout {
+  display: flex;
+  gap: 1.25rem;
+  padding: 3rem 1.25rem 1.25rem 1.25rem;
+  max-width: 100%;
+}
+
+.dual-game-container {
+  display: flex;
+  gap: 1.25rem;
+  flex: 1;
+}
+
+.dual-player-panel {
+  flex: 1;
+  background-color: rgba(248, 249, 250, 0.95);
+  border: 0.3125rem solid var(--spray-black);
+  padding: 1.5rem;
+  padding-bottom: 27rem;
+  box-shadow: 0.625rem 0.625rem 0 rgba(0, 0, 0, 0.3);
+  height: fit-content;
+  min-height: 50vh;
+}
+
+.player-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1875rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-family: 'Snakehead Graffiti', sans-serif;
+  transition: opacity 0.2s ease;
+}
+
+.player-title:hover {
+  opacity: 0.8;
+}
+
+.player-title-edit {
+  font-size: 2.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1875rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-family: 'Snakehead Graffiti', sans-serif;
+  border: 0.1875rem solid var(--spray-black);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem;
+  width: 100%;
+  box-shadow: 0.25rem 0.25rem 0 var(--spray-black);
+}
+
+.player-title-edit:focus {
+  outline: none;
+  border-color: var(--spray-cyan);
+  box-shadow: 0.375rem 0.375rem 0 var(--spray-cyan);
+}
+
+.dual-player-panel:nth-child(1) .player-title {
+  background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0.125rem 0.125rem 0 rgba(26, 108, 137, 0.3);
+}
+
+.dual-player-panel:nth-child(2) .player-title {
+  background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0.125rem 0.125rem 0 rgba(255, 0, 110, 0.3);
+}
+
+.char-counter {
+  font-size: 0.85rem;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.score-display {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 0.1875rem solid var(--spray-black);
+  text-align: center;
+}
+
+.score-number {
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.score-emoji {
+  font-size: 1rem;
+  opacity: 0.8;
+  margin-top: 0.5rem;
+}
+
+.error-message {
+  margin-top: 0.9375rem;
+  padding: 0.75rem;
+  background: rgba(255, 68, 68, 0.2);
+  border: 0.0625rem solid rgba(255, 68, 68, 0.5);
+  color: #ff4444;
+  font-size: 0.9rem;
+}
+
+/* Dual submit button with matching animations */
+.dual-submit-btn {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  font-size: 1.125rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
+  color: white;
+  border: 0.1875rem solid var(--spray-black);
+  border-radius: 0;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.125rem;
+  box-shadow: 0.375rem 0.375rem 0 var(--spray-black);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dual-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
+  transform: translate(-0.125rem, -0.125rem);
+  box-shadow: 0.5rem 0.5rem 0 var(--spray-black);
+}
+
+.dual-submit-btn:active:not(:disabled) {
+  transform: translate(0.125rem, 0.125rem);
+  box-shadow: 0.25rem 0.25rem 0 var(--spray-black);
+}
+
+.dual-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dual-game-layout .leaderboard {
+  width: 25%;
+  min-width: 18.75rem;
+}
+
+@media (max-width: 75rem) {
+  .dual-game-layout {
+    flex-direction: column;
+  }
+  
+  .dual-game-layout .leaderboard {
+    width: 100%;
+  }
+}
+
+@media (max-width: 48rem) {
+  .dual-game-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .dual-player-panel {
+    width: 100%;
+  }
+  
+  .dual-game-layout {
+    padding: 1rem;
+  }
+}
+
 @media (max-width: 30rem) {
   .game-title {
     font-size: 2.5rem;
@@ -470,5 +646,9 @@ footer p:hover {
   
   .component-container h2 {
     font-size: 1.8rem;
+  }
+  
+  .player-title {
+    font-size: 2rem;
   }
 }
