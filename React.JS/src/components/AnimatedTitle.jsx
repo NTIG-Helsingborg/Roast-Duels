@@ -62,15 +62,17 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         window.createjs.Ticker.addEventListener("tick", stage)
       }
 
+      // Calculate responsive font size to match CSS behavior exactly
+      // CSS uses font-size: 15vw for all screen sizes, so we should too
+      let actualFontSize = window.innerWidth * 0.15
+
       const canvas = canvasRef.current
       const titleElement = titleRef.current
       const titleRect = titleElement.getBoundingClientRect()
+      
+      // Set canvas size to match the H1 element dimensions for proper alignment
       canvas.width = titleRect.width
-      canvas.height = titleRect.height
-
-      let actualFontSize = window.innerWidth * 0.15
-      if (window.innerWidth <= 768) actualFontSize = 48
-      if (window.innerWidth <= 480) actualFontSize = 40
+      canvas.height = titleRect.height // Use full H1 element height for proper alignment
 
       const createParticle = (x, y, rad, alpha, color) => {
         if (!stage) return
@@ -92,7 +94,10 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
           const testCtx = testCanvas.getContext('2d')
           testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
           const fontSize = actualFontSize
-          const baselineOffset = titleRect.height * 0.75 + 30
+          // Calculate baseline offset using actual text metrics for accurate positioning
+          const metrics = testCtx.measureText(title)
+          const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+          const baselineOffset = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
           const path = font.getPath(title, 0, baselineOffset, fontSize)
           const tempCanvas = document.createElement('canvas')
           const ctx = tempCanvas.getContext('2d')
@@ -113,15 +118,35 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
           const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height)
           const data = imageData.data
           const points = []
-          const sampleRate = 8
+          // Much more aggressive sampling for large screens to prevent excessive dots
+          let sampleRate
+          if (fontSize <= 60) {
+            sampleRate = 3 // Dense for mobile
+          } else if (fontSize <= 120) {
+            sampleRate = 6 // Medium for tablet
+          } else {
+            sampleRate = 12 // Sparse for desktop
+          }
+          
           for (let y = 0; y < tempCanvas.height; y += sampleRate) {
             for (let x = 0; x < tempCanvas.width; x += sampleRate) {
               const index = (y * tempCanvas.width + x) * 4
               const alpha = data[index + 3]
               if (alpha > 100) {
-                const sprayCount = Math.floor(Math.random() * 2) + 1
+                // Fixed spray count based on screen size
+                let sprayCount
+                if (fontSize <= 60) {
+                  sprayCount = Math.floor(Math.random() * 3) + 2 // 2-4 for mobile
+                } else if (fontSize <= 120) {
+                  sprayCount = Math.floor(Math.random() * 2) + 2 // 2-3 for tablet
+                } else {
+                  sprayCount = Math.floor(Math.random() * 2) + 1 // 1-2 for desktop
+                }
+                
                 for (let i = 0; i < sprayCount; i++) {
-                  const sprayRadius = Math.random() * 4 + 1
+                  // Make spray radius responsive to font size
+                  const baseSprayRadius = Math.max(1, fontSize / 40) // Scale with font size
+                  const sprayRadius = Math.random() * baseSprayRadius + baseSprayRadius * 0.5
                   const angle = Math.random() * Math.PI * 2
                   points.push({
                     x: x + Math.cos(angle) * sprayRadius,
@@ -145,12 +170,39 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         const points = []
         const textWidth = titleRect.width
         const textHeight = titleRect.height
-        for (let x = 0; x < textWidth; x += 10) {
-          const baseY = textHeight * 0.75 + 30
-          const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * 15
-          const sprayCount = 4
+        const baseSprayRadius = Math.max(1, actualFontSize / 40) // Scale with font size
+        
+        // Fixed step sizes based on font size to prevent excessive dots
+        let stepSize
+        if (actualFontSize <= 60) {
+          stepSize = 4 // Dense for mobile
+        } else if (actualFontSize <= 120) {
+          stepSize = 8 // Medium for tablet
+        } else {
+          stepSize = 15 // Sparse for desktop
+        }
+        
+        for (let x = 0; x < textWidth; x += stepSize) {
+          // Center the fallback points with the text using the same calculation as main path
+          const testCanvas = document.createElement('canvas')
+          const testCtx = testCanvas.getContext('2d')
+          testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
+          const metrics = testCtx.measureText(title)
+          const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
+          const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * (actualFontSize * 0.1)
+          
+          // Fixed spray count based on screen size
+          let sprayCount
+          if (actualFontSize <= 60) {
+            sprayCount = Math.floor(Math.random() * 3) + 3 // 3-5 for mobile
+          } else if (actualFontSize <= 120) {
+            sprayCount = Math.floor(Math.random() * 2) + 3 // 3-4 for tablet
+          } else {
+            sprayCount = Math.floor(Math.random() * 2) + 2 // 2-3 for desktop
+          }
           for (let i = 0; i < sprayCount; i++) {
-            const sprayRadius = Math.random() * 6 + 2
+            const sprayRadius = Math.random() * baseSprayRadius * 2 + baseSprayRadius
             const angle = Math.random() * Math.PI * 2
             points.push({
               x: x + Math.cos(angle) * sprayRadius,
@@ -176,7 +228,9 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         points.forEach((point) => {
           setTimeout(() => {
             const color = traceColors[Math.floor(Math.random() * traceColors.length)]
-            const size = Math.random() * 4 + 3
+            // Make particle size responsive to font size
+            const baseSize = Math.max(1, actualFontSize / 50)
+            const size = Math.random() * baseSize + baseSize * 0.5
             const alpha = Math.random() * 0.4 + 0.6
             createParticle(point.x, point.y, size, alpha, color)
           }, point.delay)
@@ -224,7 +278,7 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
 
 
   return (
-    <div className={`animated-title-container ${className}`} style={{ position: 'relative', display: 'block' }}>
+    <div className={`animated-title-container ${className}`} style={{ position: 'relative', display: 'inline-block' }}>
       {/* Hidden title for positioning reference - completely invisible during tracing */}
       <h1 
         ref={titleRef}
@@ -245,10 +299,11 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         ref={canvasRef}
         style={{
           position: 'absolute',
-          top: '0px',
+          top: '50%',
           left: '0px',
           width: '100%',
-          height: '100%',
+          height: 'auto',
+          transform: 'translateY(-50%)',
           zIndex: 2,
           pointerEvents: 'none' // Don't block clicks
         }}

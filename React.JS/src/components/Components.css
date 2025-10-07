@@ -333,17 +333,26 @@
   color: #333;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
   flex-direction: column;
-  gap: 3rem;
   position: relative;
+  padding: 2rem;
+  text-align: center;
+}
+
+.landing-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 4rem);
+  flex: 1;
+  justify-content: center;
+  margin-bottom: 4rem; /* Ensure space for footer */
 }
 
 .mute-btn {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
+  position: fixed;
+  bottom: clamp(1rem, 5vh, 2rem);
+  right: clamp(1rem, 3vw, 2rem);
   background: transparent;
   border: none;
   padding: 1rem;
@@ -371,8 +380,10 @@
 .simple-container {
   text-align: center;
   border-radius: 0;
-  padding: 3rem;
+  padding: clamp(1rem, 4vw, 3rem);
   position: relative;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Custom font loading */
@@ -381,6 +392,13 @@
   src: url('../assets/fonts/snakehead-graffiti.regular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
+}
+
+/* Animated title container */
+.animated-title-container {
+  position: relative;
+  display: inline-block;
+  text-align: center;
 }
 
 .game-title {
@@ -401,16 +419,21 @@
     8px 8px 15px rgba(0, 0, 0, 0.2);
   transform: perspective(500px) rotateX(5deg);
   text-wrap: nowrap;
+  /* Ensure consistent positioning for canvas overlay */
+  position: relative;
+  display: inline-block;
 }
 
 .button-container {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: clamp(1rem, 3vw, 2rem);
   margin: 0 auto;
   justify-content: center;
   position: relative;
   z-index: 10; /* Ensure buttons stay above other elements */
+  max-width: 100%;
 }
 
 .game-button {
@@ -419,12 +442,29 @@
 }
 
 @media (max-width: 48rem) {
-  .game-title {
-    font-size: 3rem;
+  .landing-page {
+    padding: 1rem;
+  }
+  
+  .landing-content {
+    gap: 2rem;
+    margin-bottom: 2rem; /* Reduce margin on smaller screens */
   }
   
   .button-container {
-    max-width: 15rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .simple-container {
+    padding: 1rem;
+  }
+  
+  .mute-btn {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
   }
   
   .component-container {
@@ -438,12 +478,13 @@
 }
 
 footer {
-  position: absolute;
-  bottom: 0;
+  position: relative;
   width: 100%;
   text-align: center;
   padding: 2.5rem 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  margin-top: auto; /* Push footer to bottom */
+  flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 footer p {
@@ -635,8 +676,20 @@ footer p:hover {
 }
 
 @media (max-width: 30rem) {
-  .game-title {
-    font-size: 2.5rem;
+  .landing-page {
+    padding: 0.5rem;
+  }
+  
+  .landing-content {
+    gap: 1.5rem;
+    margin-bottom: 1.5rem; /* Further reduce margin on very small screens */
+  }
+  
+  .mute-btn {
+    position: fixed;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    padding: 0.5rem;
   }
   
   .game-button {
