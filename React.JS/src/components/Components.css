@@ -95,6 +95,17 @@
   box-shadow: 4px 4px 0 var(--spray-black);
 }
 
+.wave-btn:focus {
+  outline: none; /* Remove default browser outline */
+  transform: rotate(1deg) translate(-2px, -2px);
+  box-shadow: 10px 10px 0 var(--spray-black);
+  background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
+}
+
+.wave-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Base container style - Spray Paint Graffiti Style */
 .component-container {
   background-color: rgba(248, 249, 250, 0.95);
@@ -374,12 +385,14 @@
 
 .game-title {
   font-size: 15vw;
-  margin-bottom: 3rem;
+  margin: 0 0 6rem 0; /* Increased bottom margin to prevent button overlap */
+  padding: 0; /* Reset padding */
   letter-spacing: -0.02em;
   color: #1ccceb;
-  font-family: snakehead;
+  font-family: 'Snakehead Graffiti', sans-serif;
   background: linear-gradient(to bottom, #00d9ff, #0dc6e7);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 
     2px 2px 0px #26c9e8,
@@ -396,6 +409,8 @@
   gap: 1rem;
   margin: 0 auto;
   justify-content: center;
+  position: relative;
+  z-index: 10; /* Ensure buttons stay above other elements */
 }
 
 .game-button {

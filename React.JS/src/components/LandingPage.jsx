@@ -1,11 +1,14 @@
 import React from 'react'
 import './Components.css'
 import MuteButton from './MuteButton'
+import AnimatedTitle from './AnimatedTitle'
 
 function LandingPage({ onStartGame }) {
+  // Use a unique key to force remount
+  const [titleKey] = React.useState(() => Date.now() + Math.random())
   return (
     <div className="landing-page">
-      <h1 className="game-title">Roast Battles</h1>
+      <AnimatedTitle key={titleKey} />
       <div className="simple-container">
         <div style={{gap: '8rem'}} className="button-container">
           <button 

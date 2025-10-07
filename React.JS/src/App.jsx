@@ -5,6 +5,7 @@ import Leaderboard from './components/Leaderboard'
 import LandingPage from './components/LandingPage'
 import MuteButton from './components/MuteButton'
 import MusicPlayer from './components/MusicPlayer'
+import DrawingCanvas from './components/DrawingCanvas'
 
 function App() {
   const [showGame, setShowGame] = useState(false)
@@ -27,6 +28,7 @@ function App() {
   if (!showGame) {
     return (
       <>
+        <DrawingCanvas />
         <LandingPage onStartGame={handleStartGame} />
         <MusicPlayer />
       </>
@@ -35,6 +37,7 @@ function App() {
 
   return (
     <div className="app-wrapper">
+      <DrawingCanvas />
       <div className="game-header">
         <button className="back-button" onClick={handleBackToLanding}>
           ← Back to Home
