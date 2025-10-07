@@ -25,7 +25,12 @@ function App() {
   }
 
   if (!showGame) {
-    return <LandingPage onStartGame={handleStartGame} />
+    return (
+      <>
+        <LandingPage onStartGame={handleStartGame} />
+        <MusicPlayer />
+      </>
+    )
   }
 
   return (
@@ -40,6 +45,7 @@ function App() {
         <GamePanel onRoastSubmitted={handleRoastSubmitted} />
         <Leaderboard roasts={roasts} />
       </div>
+      <MusicPlayer />
     </div>
   )
 }

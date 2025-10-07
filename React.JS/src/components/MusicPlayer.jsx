@@ -11,7 +11,13 @@ const songs = [song1, song2, song3, song4, song5, song6];
 export default function MusicPlayer() {
   const audioRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('appMuted')) || false;
+    } catch {
+      return false;
+    }
+  });
   const [canPlay, setCanPlay] = useState(false); // Track if user has interacted
 
   console.log('MusicPlayer rendered, currentIndex:', currentIndex, 'muted:', muted);
