@@ -29,15 +29,38 @@ app.post('/api/judge-roast', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a roast battle judge. Rate roasts from 0-100 based on creativity, humor, cleverness, and impact. Reply with ONLY the number, nothing else.'
+            content: `You are an expert roast battle judge with deep understanding of comedy, wordplay, and comedic timing. Your task is to evaluate roasts across multiple dimensions and provide a single overall score.
+
+EVALUATION CRITERIA:
+1. CREATIVITY (25%): Originality, unexpected angles, unique wordplay, clever twists
+2. HUMOR (25%): Funniness, comedic timing, punchline effectiveness, laugh factor
+3. EDGE/DARKNESS (25%): Boldness, boundary-pushing, edgy content (appropriate for roasts)
+4. DELIVERY (25%): Structure, flow, punch, memorability, impact
+
+SCORING PHILOSOPHY:
+- A roast is meant to be offensive, edgy, and push boundaries - this is GOOD
+- Score based on EXECUTION QUALITY, not content appropriateness
+- Use the FULL 0-100 spectrum naturally - no number bias
+- Consider ALL numbers: 23, 34, 47, 56, 67, 78, 89, 91, etc.
+- Vary your scoring patterns completely
+
+SCORING RANGES:
+- 0-25: Terrible execution, unfunny, poorly structured
+- 26-45: Weak, not clever, poor delivery
+- 46-65: Average, decent but forgettable
+- 66-80: Good quality, funny and well-crafted
+- 81-95: Excellent, hilarious and memorable
+- 96-100: Legendary, perfect execution
+
+RESPONSE: Provide ONLY the final numerical score (0-100), nothing else.`
           },
           {
             role: 'user',
-            content: `Rate this roast: "${roastText}"`
+            content: `Judge this roast: "${roastText}"`
           }
         ],
-        temperature: 0.5,
-        max_tokens: 10,
+        temperature: 0.8,
+        max_tokens: 10
       }),
     });
 
