@@ -65,7 +65,6 @@ function AnimatedTitle({
   useEffect(() => {
     setTextTraced(false)
     animationStarted.current = false
-
     const loadFont = async () => {
       try {
         const fontPath = '/src/assets/fonts/snakehead-graffiti.regular.otf'
@@ -176,7 +175,9 @@ function AnimatedTitle({
           const fontSize = actualFontSize
           const metrics = testCtx.measureText(title)
           const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const baselineOffset = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
+          const widthRatio = window.innerWidth / 1200
+          const adjustment = metrics.actualBoundingBoxAscent * (widthRatio - 1) * 0.1
+          const baselineOffset = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent + adjustment
           const path = font.getPath(title, 0, baselineOffset, fontSize)
           const tempCanvas = document.createElement('canvas')
           const ctx = tempCanvas.getContext('2d')
@@ -262,7 +263,9 @@ function AnimatedTitle({
           testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
           const metrics = testCtx.measureText(title)
           const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
+          const widthRatio = window.innerWidth / 1200
+          const adjustment = metrics.actualBoundingBoxAscent * (widthRatio - 1) * 0.1
+          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent + adjustment
           const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * (actualFontSize * 0.1)
           
           let sprayCount
