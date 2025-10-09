@@ -23,36 +23,33 @@ function App() {
     setShowGame(false)
   }
 
-  if (!showGame) {
-    return (
-      <>
-        <LandingPage onStartGame={handleStartGame} />
-        <MusicPlayer />
-      </>
-    )
-  }
-
   return (
-    <div className="app-wrapper">
-      <div className="game-header">
-        <button 
-          className="back-button"
-          onMouseEnter={playReload}
-          onClick={handleBackToLanding}>
-          ← Back to Home
-        </button>
-        <MuteButton />
-      </div>
-      {gameMode === 'multiplayer' ? (
-        <DualGamePanel />
+    <>
+      {!showGame ? (
+        <LandingPage onStartGame={handleStartGame} />
       ) : (
-        <div className="game-container">
-          <GamePanel />
-          <Leaderboard />
+        <div className="app-wrapper">
+          <div className="game-header">
+            <button 
+              className="back-button"
+              onMouseEnter={playReload}
+              onClick={handleBackToLanding}>
+              ← Back to Home
+            </button>
+            <MuteButton />
+          </div>
+          {gameMode === 'multiplayer' ? (
+            <DualGamePanel />
+          ) : (
+            <div className="game-container">
+              <GamePanel />
+              <Leaderboard />
+            </div>
+          )}
         </div>
       )}
       <MusicPlayer />
-    </div>
+    </>
   )
 }
 
