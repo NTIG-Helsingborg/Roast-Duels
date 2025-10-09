@@ -322,6 +322,34 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: calc(75.5vh - 180px);
+  overflow-y: auto;
+  overflow-x: visible;
+  padding-right: 5px;
+  padding-left: 5px;
+  margin-left: -5px;
+}
+
+.leaderboard-entries::-webkit-scrollbar {
+  width: 10px;
+}
+
+.leaderboard-entries::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--spray-black);
+}
+
+.leaderboard-entries::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
+  border: 2px solid var(--spray-black);
+}
+
+.leaderboard-entries::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
+}
+
+.leaderboard-entries.recent-tab {
+  overflow: hidden;
 }
 
 .leaderboard-entry {

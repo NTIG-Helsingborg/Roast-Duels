@@ -13,7 +13,9 @@ function Leaderboard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/leaderboard/${endpoint}?limit=10`);
+      // Use limit of 6 for recent tab, 10 for others
+      const limit = endpoint === 'recent' ? 6 : 10;
+      const response = await fetch(`${API_BASE}/leaderboard/${endpoint}?limit=${limit}`);
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
       const data = await response.json();
       setRoasts(data);
@@ -65,7 +67,7 @@ function Leaderboard() {
         </button>
       </div>
 
-      <div className="leaderboard-entries">
+      <div className={`leaderboard-entries ${activeTab === 'recent' ? 'recent-tab' : ''}`}>
         {loading ? (
           <div className="leaderboard-message">Loading...</div>
         ) : error ? (
