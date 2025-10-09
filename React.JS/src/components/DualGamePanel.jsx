@@ -75,7 +75,6 @@ function PlayerPanel({
   };
 
   const handleReadyClick = () => {
-    playGunshot();
     onReadyToggle();
   };
 
@@ -203,6 +202,9 @@ function DualGamePanel() {
 
         setPlayer1Score(score1);
         setPlayer2Score(score2);
+
+        // Play gunshot sound when scores are revealed
+        playGunshot();
 
         // Reset after 3 seconds
         setTimeout(() => {

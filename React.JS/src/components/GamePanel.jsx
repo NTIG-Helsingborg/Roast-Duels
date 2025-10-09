@@ -70,15 +70,21 @@ function GamePanel() {
       return;
     }
 
-    playGunshot(); // Play gunshot on submit
-
+    console.log('🎯 Submit clicked - starting judgment...');
     setIsSubmitting(true);
     setError(null);
     setScore(null);
 
     try {
       const judgedScore = await judgeRoast(roastText, playerName);
+      console.log('✅ Score received:', judgedScore);
       setScore(judgedScore);
+      
+      // Small delay to ensure score is rendered before sound plays
+      setTimeout(() => {
+        console.log('🔫 Playing gunshot sound');
+        playGunshot();
+      }, 100);
       
       // Clear the input after successful submission
       setTimeout(() => {

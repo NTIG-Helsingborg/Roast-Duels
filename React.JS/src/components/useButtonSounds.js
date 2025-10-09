@@ -51,6 +51,7 @@ export function useButtonSounds() {
 
   const playReload = () => {
     if (!muted && reloadAudioRef.current) {
+      console.log('🔄 Playing reload sound');
       reloadAudioRef.current.currentTime = 0;
       reloadAudioRef.current.play().catch(err => console.log('Reload sound play failed:', err));
     }
@@ -58,6 +59,7 @@ export function useButtonSounds() {
 
   const playGunshot = () => {
     if (!muted && gunshotAudioRef.current) {
+      console.log('💥 Playing gunshot sound');
       gunshotAudioRef.current.currentTime = 0;
       gunshotAudioRef.current.play().catch(err => console.log('Gunshot sound play failed:', err));
     }
