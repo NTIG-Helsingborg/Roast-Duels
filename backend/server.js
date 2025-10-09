@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent } from './db.js';
 
 dotenv.config();
 
@@ -11,10 +12,10 @@ app.use(cors());
 app.use(express.json());
 
 app.post('/api/judge-roast', async (req, res) => {
-  const { roastText } = req.body;
+  const { roastText, username } = req.body;
 
-  if (!roastText) {
-    return res.status(400).json({ error: 'Roast text is required' });
+  if (!roastText || !username) {
+    return res.status(400).json({ error: 'Roast text and username are required' });
   }
 
   try {
@@ -75,11 +76,45 @@ RESPONSE: Provide ONLY the final numerical score (0-100), nothing else.`
     const scoreMatch = aiResponse.match(/\b(\d+)\b/);
     if (scoreMatch) {
       const score = Math.min(100, Math.max(0, parseInt(scoreMatch[1])));
+      saveRoast(username, roastText, score);
       return res.json({ score });
     }
     
     return res.status(500).json({ error: 'Could not parse score' });
     
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/leaderboard/all-time', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const results = getTopAllTime(limit);
+    res.json(results);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/leaderboard/past-7-days', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const results = getTopPast7Days(limit);
+    res.json(results);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/leaderboard/recent', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const results = getMostRecent(limit);
+    res.json(results);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });

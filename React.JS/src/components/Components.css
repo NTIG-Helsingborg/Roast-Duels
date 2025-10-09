@@ -139,11 +139,51 @@
   color: white;
   background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
   padding: 15px 20px;
-  margin: -25px -25px 25px -25px;
+  margin: -25px -25px 20px -25px;
   border-bottom: 4px solid var(--spray-black);
   text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
   font-family: 'Snakehead Graffiti', sans-serif;
   transform: rotate(0deg);
+}
+
+.leaderboard-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.leaderboard-tab {
+  flex: 1;
+  padding: 10px 15px;
+  background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
+  color: white;
+  border: 3px solid var(--spray-black);
+  border-radius: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 3px 3px 0 var(--spray-black);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.85rem;
+}
+
+.leaderboard-tab:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--spray-black);
+}
+
+.leaderboard-tab.active {
+  background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
+  color: var(--spray-black);
+}
+
+.leaderboard-message {
+  text-align: center;
+  padding: 40px 20px;
+  opacity: 0.6;
+  font-style: italic;
 }
 
 .game-panel {
@@ -251,18 +291,27 @@
   background-clip: text;
 }
 
-.solo-player {
-  margin: 0 0 1rem 0;
-  font-weight: 800;
+.game-panel .solo-player {
+  font-size: 2.5rem;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 0.1875rem;
   text-align: center;
-  font-size: 5rem;
+  margin-bottom: 2rem;
   font-family: 'Snakehead Graffiti', sans-serif;
+  color: var(--spray-cyan);
   background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-shadow: none;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+  transform: rotate(0deg);
+}
+
+.game-panel .solo-player:hover {
+  opacity: 0.8;
 }
 
 .leaderboard {

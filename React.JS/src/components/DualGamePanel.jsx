@@ -5,14 +5,14 @@ import { useButtonSounds } from './useButtonSounds';
 
 const MAX_CHARACTERS = 200;
 
-async function judgeRoast(roastText) {
+async function judgeRoast(roastText, username) {
   try {
     const response = await fetch('http://localhost:3001/api/judge-roast', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ roastText }),
+      body: JSON.stringify({ roastText, username }),
     });
 
     if (!response.ok) {
@@ -154,7 +154,7 @@ function PlayerPanel({
   );
 }
 
-function DualGamePanel({ onRoastSubmitted }) {
+function DualGamePanel() {
   const [player1Name, setPlayer1Name] = useState('Player 1');
   const [player2Name, setPlayer2Name] = useState('Player 2');
   const [player1Roast, setPlayer1Roast] = useState('');
@@ -166,7 +166,6 @@ function DualGamePanel({ onRoastSubmitted }) {
   const [isJudging, setIsJudging] = useState(false);
   const [player1Error, setPlayer1Error] = useState(null);
   const [player2Error, setPlayer2Error] = useState(null);
-  const [roasts, setRoasts] = useState([]);
   const { playReload, playGunshot } = useButtonSounds();
 
   const handlePlayer1ReadyToggle = () => {
@@ -198,37 +197,12 @@ function DualGamePanel({ onRoastSubmitted }) {
       try {
         // Judge both roasts simultaneously
         const [score1, score2] = await Promise.all([
-          judgeRoast(player1Roast),
-          judgeRoast(player2Roast)
+          judgeRoast(player1Roast, player1Name),
+          judgeRoast(player2Roast, player2Name)
         ]);
 
         setPlayer1Score(score1);
         setPlayer2Score(score2);
-
-        // Add both roasts to leaderboard
-        const timestamp = Date.now();
-        const newRoasts = [
-          {
-            text: player1Roast,
-            score: score1,
-            author: player1Name,
-            timestamp: timestamp,
-            player: 1,
-          },
-          {
-            text: player2Roast,
-            score: score2,
-            author: player2Name,
-            timestamp: timestamp + 1,
-            player: 2,
-          }
-        ];
-
-        setRoasts(prevRoasts => [...newRoasts, ...prevRoasts]);
-
-        if (onRoastSubmitted) {
-          newRoasts.forEach(roast => onRoastSubmitted(roast));
-        }
 
         // Reset after 3 seconds
         setTimeout(() => {
@@ -289,7 +263,7 @@ function DualGamePanel({ onRoastSubmitted }) {
           playGunshot={playGunshot}
         />
       </div>
-      <Leaderboard roasts={roasts} />
+      <Leaderboard />
     </div>
   );
 }

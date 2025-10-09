@@ -11,7 +11,6 @@ import { useButtonSounds } from './components/useButtonSounds'
 function App() {
   const [showGame, setShowGame] = useState(false)
   const [gameMode, setGameMode] = useState('single')
-  const [roasts, setRoasts] = useState([])
   const { playReload, playGunshot } = useButtonSounds()
 
   const handleStartGame = (mode) => {
@@ -22,10 +21,6 @@ function App() {
   const handleBackToLanding = () => {
     playGunshot()
     setShowGame(false)
-  }
-
-  const handleRoastSubmitted = (roastData) => {
-    setRoasts(prevRoasts => [roastData, ...prevRoasts])
   }
 
   if (!showGame) {
@@ -49,11 +44,11 @@ function App() {
         <MuteButton />
       </div>
       {gameMode === 'multiplayer' ? (
-        <DualGamePanel onRoastSubmitted={handleRoastSubmitted} />
+        <DualGamePanel />
       ) : (
         <div className="game-container">
-          <GamePanel onRoastSubmitted={handleRoastSubmitted} />
-          <Leaderboard roasts={roasts} />
+          <GamePanel />
+          <Leaderboard />
         </div>
       )}
       <MusicPlayer />
