@@ -2,7 +2,9 @@ import React from 'react'
 import './Components.css'
 import MuteButton from './MuteButton'
 import AnimatedTitle from './AnimatedTitle'
+import DrawingCanvas from './DrawingCanvas'
 import { useButtonSounds } from './useButtonSounds'
+import './DrawingCanvas.jsx'
 
 function LandingPage({ onStartGame }) {
   // Use a unique key to force remount
@@ -16,6 +18,8 @@ function LandingPage({ onStartGame }) {
 
   return (
     <div className="landing-page">
+      {/* Drawing Canvas with 5-second delay (500ms initial + 3000ms spray + 1500ms h1 fade) */}
+      <DrawingCanvas startDelay={5000} />
       <div className="landing-content">
         <AnimatedTitle key={titleKey} />
         <div className="simple-container">
