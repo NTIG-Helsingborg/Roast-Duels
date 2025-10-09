@@ -31,7 +31,7 @@ function Leaderboard() {
     //Auto-refresh 
     const interval = setInterval(() => {
       fetchLeaderboard(activeTab);
-    }, 60000);
+    }, 20000);
     
     return () => clearInterval(interval);
   }, [activeTab]);
