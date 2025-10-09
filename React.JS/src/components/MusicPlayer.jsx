@@ -6,7 +6,7 @@ import song4 from '../assets/music/song_4.mp3';
 import song5 from '../assets/music/song_5.mp3';
 import song6 from '../assets/music/song_6.mp3';
 
-const songs = [song6];
+const songs = [song6, song3];
 
 export default function MusicPlayer() {
   const audioRef = useRef(null);

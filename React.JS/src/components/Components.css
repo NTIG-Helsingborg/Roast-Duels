@@ -111,10 +111,9 @@
   background-color: rgba(248, 249, 250, 0.95);
   border-radius: 0;
   padding: 25px;
-  margin: 20px auto;
   border: 5px solid var(--spray-black);
   box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.3);
-  height: 87vh;
+  height: 80vh;
   position: relative;
 }
 
@@ -504,7 +503,7 @@ footer p:hover {
 .dual-game-layout {
   display: flex;
   gap: 1.25rem;
-  padding: 3rem 1.25rem 1.25rem 1.25rem;
+  padding: 0rem 1.25rem 1.25rem 1.25rem;
   max-width: 100%;
 }
 
@@ -522,7 +521,7 @@ footer p:hover {
   padding-bottom: 27rem;
   box-shadow: 0.625rem 0.625rem 0 rgba(0, 0, 0, 0.3);
   height: fit-content;
-  min-height: 50vh;
+  min-height: 80vh;
 }
 
 .player-title {
@@ -648,7 +647,7 @@ footer p:hover {
 
 .dual-game-layout .leaderboard {
   width: 25%;
-  min-width: 18.75rem;
+    min-width: 18.75rem;
 }
 
 @media (max-width: 75rem) {

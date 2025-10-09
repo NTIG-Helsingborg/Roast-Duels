@@ -6,11 +6,13 @@ import Leaderboard from './components/Leaderboard'
 import LandingPage from './components/LandingPage'
 import MuteButton from './components/MuteButton'
 import MusicPlayer from './components/MusicPlayer'
+import { useButtonSounds } from './components/useButtonSounds'
 
 function App() {
   const [showGame, setShowGame] = useState(false)
   const [gameMode, setGameMode] = useState('single')
   const [roasts, setRoasts] = useState([])
+  const { playReload, playGunshot } = useButtonSounds()
 
   const handleStartGame = (mode) => {
     setGameMode(mode)
@@ -18,6 +20,7 @@ function App() {
   }
 
   const handleBackToLanding = () => {
+    playGunshot()
     setShowGame(false)
   }
 
@@ -37,7 +40,10 @@ function App() {
   return (
     <div className="app-wrapper">
       <div className="game-header">
-        <button className="back-button" onClick={handleBackToLanding}>
+        <button 
+          className="back-button"
+          onMouseEnter={playReload}
+          onClick={handleBackToLanding}>
           ← Back to Home
         </button>
         <MuteButton />

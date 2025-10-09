@@ -2,10 +2,18 @@ import React from 'react'
 import './Components.css'
 import MuteButton from './MuteButton'
 import AnimatedTitle from './AnimatedTitle'
+import { useButtonSounds } from './useButtonSounds'
 
 function LandingPage({ onStartGame }) {
   // Use a unique key to force remount
   const [titleKey] = React.useState(() => Date.now() + Math.random())
+  const { playReload, playGunshot } = useButtonSounds()
+
+  const handleButtonClick = (mode) => {
+    playGunshot()
+    onStartGame(mode)
+  }
+
   return (
     <div className="landing-page">
       <div className="landing-content">
@@ -18,8 +26,9 @@ function LandingPage({ onStartGame }) {
                 fontSize: '1.8rem', 
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 fontFamily: "'Inter', sans-serif"
-              }} 
-              onClick={() => onStartGame('multiplayer')}>
+              }}
+              onMouseEnter={playReload}
+              onClick={() => handleButtonClick('multiplayer')}>
               Duel
               <span style={{display: 'block', fontSize: '0.9rem', opacity: 0.8, marginTop: '5px', fontWeight: 'normal'}}>
                 Roast a friend
@@ -31,8 +40,9 @@ function LandingPage({ onStartGame }) {
                 fontSize: '1.8rem', 
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 fontFamily: "'Inter', sans-serif"
-              }} 
-              onClick={() => onStartGame('single')}>
+              }}
+              onMouseEnter={playReload}
+              onClick={() => handleButtonClick('single')}>
               Solo
               <span style={{display: 'block', fontSize: '0.9rem', opacity: 0.8, marginTop: '5px', fontWeight: 'normal'}}>
                 Set highscores

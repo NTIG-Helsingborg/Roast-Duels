@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Components.css';
 import Leaderboard from './Leaderboard';
+import { useButtonSounds } from './useButtonSounds';
 
 const MAX_CHARACTERS = 200;
 
@@ -38,7 +39,9 @@ function PlayerPanel({
   onReadyToggle,
   score,
   isJudging,
-  error
+  error,
+  playReload,
+  playGunshot
 }) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(playerName);
@@ -69,6 +72,11 @@ function PlayerPanel({
     if (e.key === 'Enter') {
       e.target.blur();
     }
+  };
+
+  const handleReadyClick = () => {
+    playGunshot();
+    onReadyToggle();
   };
 
   return (
@@ -114,8 +122,9 @@ function PlayerPanel({
       </div>
       
       <button 
-        className="dual-submit-btn" 
-        onClick={onReadyToggle}
+        className="dual-submit-btn"
+        onMouseEnter={playReload}
+        onClick={handleReadyClick}
         disabled={isJudging || (!roastText.trim() && !isReady) || isOverLimit}
       >
         {isJudging ? 'Judging...' : isReady ? '✓ Ready!' : 'Ready to Battle'}
@@ -158,6 +167,7 @@ function DualGamePanel({ onRoastSubmitted }) {
   const [player1Error, setPlayer1Error] = useState(null);
   const [player2Error, setPlayer2Error] = useState(null);
   const [roasts, setRoasts] = useState([]);
+  const { playReload, playGunshot } = useButtonSounds();
 
   const handlePlayer1ReadyToggle = () => {
     if (player1Ready) {
@@ -261,6 +271,8 @@ function DualGamePanel({ onRoastSubmitted }) {
           score={player1Score}
           isJudging={isJudging}
           error={player1Error}
+          playReload={playReload}
+          playGunshot={playGunshot}
         />
         <PlayerPanel 
           playerName={player2Name}
@@ -273,6 +285,8 @@ function DualGamePanel({ onRoastSubmitted }) {
           score={player2Score}
           isJudging={isJudging}
           error={player2Error}
+          playReload={playReload}
+          playGunshot={playGunshot}
         />
       </div>
       <Leaderboard roasts={roasts} />

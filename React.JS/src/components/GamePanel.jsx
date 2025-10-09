@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Components.css';
+import { useButtonSounds } from './useButtonSounds';
 
 const MAX_CHARACTERS = 200; // Twitter-style character limit
 
@@ -32,12 +33,15 @@ function GamePanel({ onRoastSubmitted }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(null);
   const [error, setError] = useState(null);
+  const { playReload, playGunshot } = useButtonSounds();
 
   const handleSubmit = async () => {
     if (!roastText.trim()) {
       setError('Please enter a roast!');
       return;
     }
+
+    playGunshot(); // Play gunshot on submit
 
     setIsSubmitting(true);
     setError(null);
@@ -109,7 +113,8 @@ function GamePanel({ onRoastSubmitted }) {
       </div>
       
       <button 
-        className="btn-primary" 
+        className="btn-primary"
+        onMouseEnter={playReload}
         onClick={handleSubmit}
         disabled={isSubmitting || !roastText.trim() || isOverLimit}
       >
