@@ -17,29 +17,30 @@
 }
 
 .back-button {
-  padding: 14px 20px;
-  font-size: 18px;
+  padding: 0.875rem 1.25rem;
+  font-size: 1.125rem;
   width: 100%;
   background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
   color: white;
-  border: 3px solid var(--spray-black);
+  border: 0.1875rem solid var(--spray-black);
   border-radius: 0;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  box-shadow: 6px 6px 0 var(--spray-black);
+  letter-spacing: 0.125rem;
+  box-shadow: 0.375rem 0.375rem 0 var(--spray-black);
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  width: 10%;
+  width: auto;
   margin-left: 1.5rem;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  text-wrap: nowrap;
 }
 
 .back-button:hover {
   background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0 var(--spray-black);
+  transform: translate(-0.125rem, -0.125rem);
+  box-shadow: 0.5rem 0.5rem 0 var(--spray-black);
 }
 
 /* Shared button style - used across all components */
@@ -345,7 +346,6 @@
   gap: clamp(2rem, 5vw, 4rem);
   flex: 1;
   justify-content: center;
-  margin-bottom: 4rem; /* Ensure space for footer */
 }
 
 .mute-btn {
@@ -447,8 +447,7 @@
   }
   
   .landing-content {
-    gap: 2rem;
-    margin-bottom: 2rem; /* Reduce margin on smaller screens */
+    gap: 2rem; /* Reduce margin on smaller screens */
   }
   
   .button-container {
@@ -481,10 +480,10 @@ footer {
   position: relative;
   width: 100%;
   text-align: center;
-  padding: 2.5rem 0;
+  padding-top: 2.5rem 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  margin-top: auto; /* Push footer to bottom */
-  flex-shrink: 0; /* Prevent footer from shrinking */
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 footer p {
@@ -518,7 +517,6 @@ footer p:hover {
   background-color: rgba(248, 249, 250, 0.95);
   border: 0.3125rem solid var(--spray-black);
   padding: 1.5rem;
-  padding-bottom: 27rem;
   box-shadow: 0.625rem 0.625rem 0 rgba(0, 0, 0, 0.3);
   height: fit-content;
   min-height: 80vh;
@@ -540,7 +538,7 @@ footer p:hover {
 }
 
 .player-title-edit {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.1875rem;
@@ -549,7 +547,6 @@ footer p:hover {
   font-family: 'Snakehead Graffiti', sans-serif;
   border: 0.1875rem solid var(--spray-black);
   background: rgba(255, 255, 255, 0.9);
-  padding: 0.5rem;
   width: 100%;
   box-shadow: 0.25rem 0.25rem 0 var(--spray-black);
 }
