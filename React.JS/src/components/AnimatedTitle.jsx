@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import opentype from 'opentype.js'
 import sprayPaintSound from '../assets/spraypaintsound.mp3'
+import { useAudioReactive } from './useAudioReactive'
 import './Components.css'
 
 function AnimatedTitle({ 
@@ -26,6 +27,9 @@ function AnimatedTitle({
   const soundTimeoutRef = useRef(null)
   const audioRef = useRef(null)
   const [audioKey] = useState(() => Date.now() + Math.random())
+  
+  // Use audio-reactive hook - starts after text is traced
+  const audioData = useAudioReactive(textTraced, 1000)
   
   const traceColors = ["#00d9ff", "#0dc6e7", "#26c9e8", "#1fb5d1"]
 
@@ -151,8 +155,16 @@ function AnimatedTitle({
       const titleElement = titleRef.current
       const titleRect = titleElement.getBoundingClientRect()
       
-      canvas.width = titleRect.width
-      canvas.height = titleRect.height
+      // Add extra space around canvas to prevent clipping spray particles
+      const extraSpace = 60 // Extra pixels on each side
+      canvas.width = titleRect.width + (extraSpace * 2)
+      canvas.height = titleRect.height + (extraSpace * 2)
+
+      // Adjust stage position to account for extra space
+      if (stage) {
+        stage.x = extraSpace
+        stage.y = extraSpace
+      }
 
       const createParticle = (x, y, rad, alpha, color) => {
         if (!stage) return
@@ -349,7 +361,11 @@ function AnimatedTitle({
 
 
   return (
-    <div className={`animated-title-container ${className}`} style={{ position: 'relative', display: 'inline-block' }}>
+    <div className={`animated-title-container ${className}`} style={{ 
+      position: 'relative', 
+      display: 'inline-block',
+      overflow: 'visible' // Allow effects to extend beyond container
+    }}>
       <h1 
         ref={titleRef}
         className="game-title" 
@@ -357,8 +373,12 @@ function AnimatedTitle({
           position: 'relative',
           zIndex: 3,
           opacity: textTraced ? 1 : 0,
-          transition: 'opacity 1s ease',
-          visibility: textTraced ? 'visible' : 'hidden'
+          transition: 'opacity 1s ease, transform 0.15s ease-out, filter 0.2s ease-out',
+          visibility: textTraced ? 'visible' : 'hidden',
+          transform: `scale(${audioData.scale})`,
+          filter: `drop-shadow(0 0 ${6 + audioData.glow * 10}px rgba(0, 217, 255, ${audioData.glow * 0.4}))`,
+          transformOrigin: 'center center',
+          willChange: 'transform, filter'
         }}
       >
         {title}
@@ -369,10 +389,8 @@ function AnimatedTitle({
         style={{
           position: 'absolute',
           top: '50%',
-          left: '0px',
-          width: '100%',
-          height: 'auto',
-          transform: 'translateY(-50%)',
+          left: '50%',
+          transform: 'translate(-50%, -50%)', // Center the canvas
           zIndex: 2,
           pointerEvents: 'none'
         }}

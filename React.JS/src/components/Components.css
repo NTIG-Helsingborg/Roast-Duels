@@ -399,6 +399,7 @@
   position: relative;
   display: inline-block;
   text-align: center;
+  overflow: visible; /* Allow spray particles and effects to extend beyond */
 }
 
 .game-title {
