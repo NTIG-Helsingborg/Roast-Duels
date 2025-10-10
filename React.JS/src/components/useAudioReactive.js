@@ -16,6 +16,7 @@ export function useAudioReactive(isActive = false, delay = 250) {
   const smoothedMidRef = useRef(0);
   const lastBeatTimeRef = useRef(0);
   const previousBassRef = useRef(0);
+  const [analyserReady, setAnalyserReady] = useState(false);
 
   // Setup audio analyzer connection
   useEffect(() => {
@@ -23,11 +24,19 @@ export function useAudioReactive(isActive = false, delay = 250) {
       try {
         const { analyser } = event.detail;
         analyserRef.current = analyser;
+        setAnalyserReady(true);
         console.log('✅ Audio analyzer connected to hook');
       } catch (error) {
         console.error('❌ Error setting up audio analyzer:', error);
       }
     };
+
+    // Check if analyzer is already available (for remounts)
+    if (window.audioAnalyser) {
+      analyserRef.current = window.audioAnalyser;
+      setAnalyserReady(true);
+      console.log('✅ Audio analyzer reconnected from window.audioAnalyser');
+    }
 
     window.addEventListener('audio-analyzer-ready', handleAudioReady);
     
@@ -38,8 +47,18 @@ export function useAudioReactive(isActive = false, delay = 250) {
 
   // Start animation after delay when active
   useEffect(() => {
-    if (!isActive || !analyserRef.current) return;
+    if (!isActive) {
+      console.log('⏸️ Audio reactive not active yet');
+      return;
+    }
+    
+    if (!analyserRef.current) {
+      console.log('⚠️ No audio analyzer available yet');
+      return;
+    }
 
+    console.log(`🎵 Starting audio reactive animation with ${delay}ms delay`);
+    
     const timer = setTimeout(() => {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
       
@@ -115,7 +134,7 @@ export function useAudioReactive(isActive = false, delay = 250) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isActive, delay]);
+  }, [isActive, delay, analyserReady]);
 
   return audioData;
 }
