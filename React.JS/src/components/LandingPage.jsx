@@ -57,7 +57,7 @@ function LandingPage({ onStartGame }) {
       </div>
       <MuteButton />
       <footer>
-        <p>Made by Mykyta, Carl, Damian & Viktor</p>
+        <p>Made by Mykyta, Carl & Viktor</p>
       </footer>
     </div>
   )
