@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import sprayPaintSound from '../assets/spraypaintsound.mp3'
 
-function DrawingCanvas({ startDelay = 0 }) {
+function DrawingCanvas({ startDelay = 0, muted = false }) {
   const canvasRef = useRef(null)
   const stageRef = useRef(null)
   const [isMouseDown, setIsMouseDown] = useState(false)
@@ -159,7 +159,7 @@ function DrawingCanvas({ startDelay = 0 }) {
           }
         })
 
-        if (audioRef.current) {
+        if (audioRef.current && !muted) {
           const audio = audioRef.current
           const AUDIO_START_TIME = 11.5
           const AUDIO_END_CUTOFF = 20.1
@@ -321,8 +321,8 @@ function DrawingCanvas({ startDelay = 0 }) {
           left: 0,
           width: '100vw',
           height: '100vh',
-          zIndex: 0,
-          pointerEvents: 'none'
+          zIndex: -1,
+          pointerEvents: 'auto'
         }}
       />
       <audio

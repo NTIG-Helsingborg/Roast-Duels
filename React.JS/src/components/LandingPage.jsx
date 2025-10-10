@@ -2,9 +2,7 @@ import React from 'react'
 import './Components.css'
 import MuteButton from './MuteButton'
 import AnimatedTitle from './AnimatedTitle'
-import DrawingCanvas from './DrawingCanvas'
 import { useButtonSounds } from './useButtonSounds'
-import './DrawingCanvas.jsx'
 
 function LandingPage({ onStartGame }) {
   // Remove the unique key to prevent forced remounts
@@ -17,8 +15,6 @@ function LandingPage({ onStartGame }) {
 
   return (
     <div className="landing-page">
-      {/* Drawing Canvas with 5-second delay (500ms initial + 3000ms spray + 1500ms h1 fade) */}
-      <DrawingCanvas startDelay={5000} />
       <div className="landing-content">
         <AnimatedTitle />
         <div className="simple-container">

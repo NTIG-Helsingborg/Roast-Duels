@@ -6,6 +6,7 @@ import Leaderboard from './components/Leaderboard'
 import LandingPage from './components/LandingPage'
 import MuteButton from './components/MuteButton'
 import MusicPlayer from './components/MusicPlayer'
+import DrawingCanvas from './components/DrawingCanvas'
 import { useButtonSounds } from './components/useButtonSounds'
 
 function App() {
@@ -25,6 +26,8 @@ function App() {
 
   return (
     <>
+      {/* DrawingCanvas with delay only on landing page, muted on game pages */}
+      <DrawingCanvas key={showGame ? 'game' : 'landing'} startDelay={!showGame ? 5000 : 0} muted={showGame} />
       {!showGame ? (
         <LandingPage onStartGame={handleStartGame} />
       ) : (
