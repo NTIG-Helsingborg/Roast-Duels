@@ -28,8 +28,30 @@ function AnimatedTitle({
   const audioRef = useRef(null)
   const [audioKey] = useState(() => Date.now() + Math.random())
   
-  // Use audio-reactive hook - starts after text is traced
-  const audioData = useAudioReactive(textTraced, 1000)
+  // Initialize audio delay based on whether we've animated before
+  const [shouldDelayAudio, setShouldDelayAudio] = useState(() => {
+    try {
+      // If we've animated before, no delay needed
+      return sessionStorage.getItem('titleAnimated') !== 'true'
+    } catch {
+      return true // Default to delay on first visit
+    }
+  })
+  
+  // Keep audio-reactive hook always active, but with delay only on first animation
+  const audioData = useAudioReactive(true, shouldDelayAudio ? 1000 : 0)
+  
+  // Debug: Log when audioData changes
+  useEffect(() => {
+    if (audioData.scale !== 1) {
+      console.log('[AnimatedTitle] 🎵 Audio pulse:', audioData.scale.toFixed(3))
+    }
+  }, [audioData.scale])
+  
+  // Debug: Log delay changes
+  useEffect(() => {
+    console.log('[AnimatedTitle] Audio delay setting:', shouldDelayAudio ? '1000ms (waiting for animation)' : '0ms (instant sync)')
+  }, [shouldDelayAudio])
   
   const traceColors = ["#00d9ff", "#0dc6e7", "#26c9e8", "#1fb5d1"]
 
@@ -67,8 +89,20 @@ function AnimatedTitle({
   }, [])
 
   useEffect(() => {
+    // Check if we've animated before in this session
+    const hasAnimated = sessionStorage.getItem('titleAnimated') === 'true'
+    
+    if (hasAnimated) {
+      console.log('[AnimatedTitle] ⚡ Returning - run animation but with instant audio sync')
+      setShouldDelayAudio(false) // No audio delay on return visits
+    } else {
+      console.log('[AnimatedTitle] 🎨 First visit - starting animation with delayed audio')
+    }
+    
+    // Always reset these for the animation to run
     setTextTraced(false)
     animationStarted.current = false
+    
     const loadFont = async () => {
       try {
         const fontPath = '/src/assets/fonts/snakehead-graffiti.regular.otf'
@@ -306,6 +340,10 @@ function AnimatedTitle({
         if (!stage) {
           setTimeout(() => {
             setTextTraced(true)
+            setShouldDelayAudio(false)
+            try {
+              sessionStorage.setItem('titleAnimated', 'true')
+            } catch (e) {}
           }, 1000)
           return
         }
@@ -324,6 +362,11 @@ function AnimatedTitle({
         
         setTimeout(() => {
           setTextTraced(true)
+          setShouldDelayAudio(false)
+          console.log('[AnimatedTitle] 🎵 Animation complete, audio sync active')
+          try {
+            sessionStorage.setItem('titleAnimated', 'true')
+          } catch (e) {}
         }, maxDelay + 1000)
       }
 
