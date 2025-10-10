@@ -3,11 +3,11 @@ import opentype from 'opentype.js'
 import sprayPaintSound from '../assets/spraypaintsound.mp3'
 import { useAudioReactive } from './useAudioReactive'
 import './Components.css'
+import { motion } from 'framer-motion'
 
 function AnimatedTitle({ 
   title = "Roast Battles", 
   className = "",
-  // Sound customization props
   soundVolume = 0.3,
   soundPlaybackRate = 1.0,
   soundEnabled = true,
@@ -16,6 +16,7 @@ function AnimatedTitle({
 }) {
   const canvasRef = useRef(null)
   const titleRef = useRef(null)
+  const measureRef = useRef(null) // NEW: for measuring without scale
   const stageRef = useRef(null)
   const animationRef = useRef(null)
   const [textTraced, setTextTraced] = useState(false)
@@ -28,20 +29,17 @@ function AnimatedTitle({
   const audioRef = useRef(null)
   const [audioKey] = useState(() => Date.now() + Math.random())
   
-  // Use audio-reactive hook - starts after text is traced
   const audioData = useAudioReactive(textTraced, 1000)
   
   const traceColors = ["#00d9ff", "#0dc6e7", "#26c9e8", "#1fb5d1"]
 
-    useEffect(() => {
+  useEffect(() => {
     const handleMouseMove = (e) => {
       setCursorPosition({ x: e.clientX, y: e.clientY })
     }
-
     if (!userHasInteracted) {
       document.addEventListener('mousemove', handleMouseMove)
     }
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
     }
@@ -54,11 +52,9 @@ function AnimatedTitle({
       document.removeEventListener('keydown', handleUserInteraction)
       document.removeEventListener('touchstart', handleUserInteraction)
     }
-
     document.addEventListener('click', handleUserInteraction)
     document.addEventListener('keydown', handleUserInteraction)
     document.addEventListener('touchstart', handleUserInteraction)
-
     return () => {
       document.removeEventListener('click', handleUserInteraction)
       document.removeEventListener('keydown', handleUserInteraction)
@@ -82,16 +78,11 @@ function AnimatedTitle({
     loadFont()
   }, [])
 
-
-
-  // Audio timing control
   useEffect(() => {
     setShouldPlaySound(true)
-    
     const timeout = setTimeout(() => {
       setShouldPlaySound(false)
-    }, 3300) // Sound duration in milliseconds
-
+    }, 3300)
     return () => {
       clearTimeout(timeout)
       setShouldPlaySound(false)
@@ -100,16 +91,12 @@ function AnimatedTitle({
 
   useEffect(() => {
     const audio = audioRef.current;
-    
     if (!audio) return;
-
     audio.volume = soundVolume;
     audio.playbackRate = soundPlaybackRate;
     audio.loop = false;
-
     if (shouldPlaySound && userHasInteracted) {
-      audio.currentTime = 12; // Start at 12 seconds
-      
+      audio.currentTime = 12;
       audio.play()
         .then(() => {
           console.log('✅ Audio started successfully');
@@ -120,7 +107,6 @@ function AnimatedTitle({
     } else {
       audio.pause();
     }
-
     return () => {
       if (audio) {
         audio.pause();
@@ -135,7 +121,7 @@ function AnimatedTitle({
       didRun = true
       animationStarted.current = true
 
-      if (typeof window === 'undefined' || !canvasRef.current || !titleRef.current) {
+      if (typeof window === 'undefined' || !canvasRef.current || !measureRef.current) {
         setTextTraced(true)
         return
       }
@@ -152,15 +138,13 @@ function AnimatedTitle({
       let actualFontSize = window.innerWidth * 0.15
 
       const canvas = canvasRef.current
-      const titleElement = titleRef.current
+      const titleElement = measureRef.current // CHANGED: use measureRef
       const titleRect = titleElement.getBoundingClientRect()
       
-      // Add extra space around canvas to prevent clipping spray particles
-      const extraSpace = 60 // Extra pixels on each side
+      const extraSpace = 60
       canvas.width = titleRect.width + (extraSpace * 2)
       canvas.height = titleRect.height + (extraSpace * 2)
 
-      // Adjust stage position to account for extra space
       if (stage) {
         stage.x = extraSpace
         stage.y = extraSpace
@@ -358,31 +342,50 @@ function AnimatedTitle({
     }
   }, [font])
 
-
-
   return (
     <div className={`animated-title-container ${className}`} style={{ 
       position: 'relative', 
       display: 'inline-block',
-      overflow: 'visible' // Allow effects to extend beyond container
+      overflow: 'visible'
     }}>
-      <h1 
-        ref={titleRef}
-        className="game-title" 
+      <motion.div
+        initial={{ scale: 5 }}
+        animate={
+          textTraced
+            ? {
+                scale: [5, 1.06, 0.98, 1],
+                transition: {
+                  duration: 0.6,
+                  times: [0, 0.65, 0.85, 1],
+                  ease: 'easeOut'
+                }
+              }
+            : {}
+        }
         style={{ 
           position: 'relative',
           zIndex: 3,
           opacity: textTraced ? 1 : 0,
-          transition: 'opacity 1s ease, transform 0.15s ease-out, filter 0.2s ease-out',
           visibility: textTraced ? 'visible' : 'hidden',
-          transform: `scale(${audioData.scale})`,
-          filter: `drop-shadow(0 0 ${6 + audioData.glow * 10}px rgba(0, 217, 255, ${audioData.glow * 0.4}))`,
-          transformOrigin: 'center center',
-          willChange: 'transform, filter'
+          willChange: 'transform'
         }}
       >
-        {title}
-      </h1>
+        <h1 
+          ref={titleRef}
+          className="game-title" 
+          style={{ 
+            position: 'relative',
+            zIndex: 3,
+            opacity: 1,
+            transform: `scale(${audioData.scale})`,
+            filter: `drop-shadow(0 0 ${6 + audioData.glow * 10}px rgba(0, 217, 255, ${audioData.glow * 0.4}))`,
+            transformOrigin: 'center center',
+            willChange: 'transform, filter'
+          }}
+        >
+          {title}
+        </h1>
+      </motion.div>
       
       <canvas 
         ref={canvasRef}
@@ -390,7 +393,7 @@ function AnimatedTitle({
           position: 'absolute',
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%)', // Center the canvas
+          transform: 'translate(-50%, -50%)',
           zIndex: 2,
           pointerEvents: 'none'
         }}
@@ -398,6 +401,7 @@ function AnimatedTitle({
       
       {!textTraced && (
         <h1 
+          ref={measureRef}
           className="game-title" 
           style={{ 
             position: 'absolute',
