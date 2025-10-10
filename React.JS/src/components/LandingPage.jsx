@@ -7,8 +7,7 @@ import { useButtonSounds } from './useButtonSounds'
 import './DrawingCanvas.jsx'
 
 function LandingPage({ onStartGame }) {
-  // Use a unique key to force remount
-  const [titleKey] = React.useState(() => Date.now() + Math.random())
+  // Remove the unique key to prevent forced remounts
   const { playReload, playGunshot } = useButtonSounds()
 
   const handleButtonClick = (mode) => {
@@ -21,7 +20,7 @@ function LandingPage({ onStartGame }) {
       {/* Drawing Canvas with 5-second delay (500ms initial + 3000ms spray + 1500ms h1 fade) */}
       <DrawingCanvas startDelay={5000} />
       <div className="landing-content">
-        <AnimatedTitle key={titleKey} />
+        <AnimatedTitle />
         <div className="simple-container">
           <div style={{gap: '8rem'}} className="button-container">
             <button 

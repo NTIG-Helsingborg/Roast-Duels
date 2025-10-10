@@ -75,6 +75,9 @@ export default function MusicPlayer() {
         sourceRef.current = source;
         gainNodeRef.current = gainNode;
         
+        // Store analyzer globally for components that mount later
+        window.audioAnalyser = analyser;
+        
         window.dispatchEvent(new CustomEvent('audio-analyzer-ready', {
           detail: { analyser }
         }));
