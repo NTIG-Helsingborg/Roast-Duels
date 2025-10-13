@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Components.css';
 import Leaderboard from './Leaderboard';
 import { useButtonSounds } from './useButtonSounds';
+import DualLoginModal from './DualLoginModal';
 
 const MAX_CHARACTERS = 200;
 
@@ -154,8 +155,10 @@ function PlayerPanel({
 }
 
 function DualGamePanel() {
-  const [player1Name, setPlayer1Name] = useState('Player 1');
-  const [player2Name, setPlayer2Name] = useState('Player 2');
+  const [player1Name, setPlayer1Name] = useState('');
+  const [player2Name, setPlayer2Name] = useState('');
+  const [password, setPassword] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(true);
   const [player1Roast, setPlayer1Roast] = useState('');
   const [player2Roast, setPlayer2Roast] = useState('');
   const [player1Ready, setPlayer1Ready] = useState(false);
@@ -166,6 +169,13 @@ function DualGamePanel() {
   const [player1Error, setPlayer1Error] = useState(null);
   const [player2Error, setPlayer2Error] = useState(null);
   const { playReload, playGunshot } = useButtonSounds();
+
+  const handleLogin = (p1Name, p2Name, pass) => {
+    setPlayer1Name(p1Name);
+    setPlayer2Name(p2Name);
+    setPassword(pass);
+    setShowLoginModal(false);
+  };
 
   const handlePlayer1ReadyToggle = () => {
     if (player1Ready) {
@@ -234,39 +244,47 @@ function DualGamePanel() {
   };
 
   return (
-    <div className="dual-game-layout">
-      <div className="dual-game-container">
-        <PlayerPanel 
-          playerName={player1Name}
-          playerNumber={1}
-          roastText={player1Roast}
-          onRoastChange={setPlayer1Roast}
-          onNameChange={setPlayer1Name}
-          isReady={player1Ready}
-          onReadyToggle={handlePlayer1ReadyToggle}
-          score={player1Score}
-          isJudging={isJudging}
-          error={player1Error}
-          playReload={playReload}
-          playGunshot={playGunshot}
-        />
-        <PlayerPanel 
-          playerName={player2Name}
-          playerNumber={2}
-          roastText={player2Roast}
-          onRoastChange={setPlayer2Roast}
-          onNameChange={setPlayer2Name}
-          isReady={player2Ready}
-          onReadyToggle={handlePlayer2ReadyToggle}
-          score={player2Score}
-          isJudging={isJudging}
-          error={player2Error}
-          playReload={playReload}
-          playGunshot={playGunshot}
-        />
+    <>
+      <DualLoginModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLogin={handleLogin}
+      />
+      
+      <div className="dual-game-layout">
+        <div className="dual-game-container">
+          <PlayerPanel 
+            playerName={player1Name}
+            playerNumber={1}
+            roastText={player1Roast}
+            onRoastChange={setPlayer1Roast}
+            onNameChange={setPlayer1Name}
+            isReady={player1Ready}
+            onReadyToggle={handlePlayer1ReadyToggle}
+            score={player1Score}
+            isJudging={isJudging}
+            error={player1Error}
+            playReload={playReload}
+            playGunshot={playGunshot}
+          />
+          <PlayerPanel 
+            playerName={player2Name}
+            playerNumber={2}
+            roastText={player2Roast}
+            onRoastChange={setPlayer2Roast}
+            onNameChange={setPlayer2Name}
+            isReady={player2Ready}
+            onReadyToggle={handlePlayer2ReadyToggle}
+            score={player2Score}
+            isJudging={isJudging}
+            error={player2Error}
+            playReload={playReload}
+            playGunshot={playGunshot}
+          />
+        </div>
+        <Leaderboard />
       </div>
-      <Leaderboard />
-    </div>
+    </>
   );
 }
 
