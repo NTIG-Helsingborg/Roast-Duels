@@ -2,7 +2,17 @@ import React, { useState, useEffect } from 'react';
 import './Components.css';
 
 function Leaderboard({ roasts = [] }) {
-  // Sort roasts by score (highest first) and take top 10
+  const formatDateTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
   const topRoasts = [...roasts]
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
@@ -31,6 +41,7 @@ function Leaderboard({ roasts = [] }) {
                   {roast.author}
                 </p>
                 <p className="text">{roast.text}</p>
+                <p className="time-stamp">{formatDateTime(roast.timestamp)}</p>
               </div>
             </div>
           ))
