@@ -231,11 +231,11 @@ function AnimatedTitle({
           const points = []
           let sampleRate
           if (fontSize <= 60) {
-            sampleRate = 3
-          } else if (fontSize <= 120) {
             sampleRate = 6
+          } else if (fontSize <= 120) {
+            sampleRate = 10
           } else {
-            sampleRate = 12
+            sampleRate = 16
           }
           
           for (let y = 0; y < tempCanvas.height; y += sampleRate) {
@@ -393,15 +393,15 @@ function AnimatedTitle({
       overflow: 'visible'
     }}>
       <motion.div
-        initial={{ scale: 5 }}
+        initial={{ scale: 2 }}
         animate={
           textTraced
             ? {
-                scale: [5, 1.06, 0.98, 1],
+                scale: [2, 1.02, 1],
                 transition: {
-                  duration: 0.6,
-                  times: [0, 0.65, 0.85, 1],
-                  ease: 'easeOut'
+                  duration: 1.5,
+                  times: [0, 0.75, 1],
+                  ease: [0.16, 1, 0.3, 1]
                 }
               }
             : {}
@@ -465,7 +465,7 @@ function AnimatedTitle({
         key={audioKey}
         ref={audioRef}
         src={sprayPaintSound}
-        preload="auto"
+        preload="none"
       />
       
       {!userHasInteracted && (
