@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './Components.css';
 
 const API_BASE = 'http://localhost:3001/api';
+
+const getScoreGradient = (score) => {
+  if (score >= 80) {
+    return 'linear-gradient(135deg, #22ff88 0%, #00aa44 100%)';
+  } else if (score >= 60) {
+    return 'linear-gradient(135deg, #ffff00 0%, #88dd00 100%)';
+  } else if (score >= 40) {
+    return 'linear-gradient(135deg, #ffdd00 0%,rgb(255, 168, 28) 100%)';
+  } else if (score >= 20) {
+    return 'linear-gradient(135deg,rgb(255, 149, 0) 0%,rgb(221, 55, 0) 100%)';
+  } else {
+    return 'linear-gradient(135deg,rgb(255, 37, 37) 0%,rgb(177, 1, 1) 100%)';
+  }
+};
 
 function Leaderboard() {
   const [activeTab, setActiveTab] = useState('all-time');
@@ -9,11 +23,10 @@ function Leaderboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchLeaderboard = async (endpoint) => {
+  const fetchLeaderboard = useCallback(async (endpoint) => {
     setLoading(true);
     setError(null);
     try {
-      // Use limit of 6 for recent tab, 10 for others
       const limit = endpoint === 'recent' ? 6 : 10;
       const response = await fetch(`${API_BASE}/leaderboard/${endpoint}?limit=${limit}`);
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
@@ -25,38 +38,18 @@ function Leaderboard() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Function to get gradient colors based on score
-  const getScoreGradient = (score) => {
-    if (score >= 80) {
-      // Green for high scores (80-100)
-      return 'linear-gradient(135deg, #22ff88 0%, #00aa44 100%)';
-    } else if (score >= 60) {
-      // Yellow-green for good scores (60-79)
-      return 'linear-gradient(135deg, #ffff00 0%, #88dd00 100%)';
-    } else if (score >= 40) {
-      // Yellow-orange for decent scores (40-59)
-      return 'linear-gradient(135deg, #ffdd00 0%,rgb(255, 168, 28) 100%)';
-    } else if (score >= 20) {
-      // Orange-red for low scores (20-39)
-      return 'linear-gradient(135deg,rgb(255, 149, 0) 0%,rgb(221, 55, 0) 100%)';
-    } else {
-      // Deep red for very low scores (0-19)
-      return 'linear-gradient(135deg,rgb(255, 37, 37) 0%,rgb(177, 1, 1) 100%)';
-    }
-  };
+  }, []);
 
   useEffect(() => {
     fetchLeaderboard(activeTab);
     
-    //Auto-refresh 
+  
     const interval = setInterval(() => {
       fetchLeaderboard(activeTab);
-    }, 20000);
+    }, 60000);
     
     return () => clearInterval(interval);
-  }, [activeTab]);
+  }, [activeTab, fetchLeaderboard]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);

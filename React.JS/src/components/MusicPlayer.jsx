@@ -120,6 +120,7 @@ export default function MusicPlayer() {
       src={songs[currentIndex]}
       muted={muted}
       onEnded={handleEnded}
+      preload="none"
       style={{ display: "none" }}
     />
   );
