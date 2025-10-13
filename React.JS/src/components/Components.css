@@ -403,8 +403,16 @@
 .text {
   margin: 0;
   color: #333;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
+}
+
+.time-stamp {
+  margin: 0.5rem 0 0 0;
+  color: #888;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-style: italic;
 }
 
 .landing-page {
