@@ -42,6 +42,17 @@ function Leaderboard() {
     setActiveTab(tab);
   };
 
+  const formatDateTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
   return (
     <div className="component-container leaderboard">
       <h2>Leaderboard</h2>
@@ -86,6 +97,7 @@ function Leaderboard() {
                   {roast.username}
                 </p>
                 <p className="text">{roast.roast}</p>
+                <p className="time-stamp">{formatDateTime(roast.created_at)}</p>
               </div>
             </div>
           ))
