@@ -90,8 +90,8 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
     : (isSignUp ? 'Join the Arena' : 'Enter the Arena');
 
   const submitButtonText = isDualMode
-    ? (isSignUp ? 'Create Account & Battle! 🔥' : 'Let\'s Battle! 🔥')
-    : (isSignUp ? 'Create Account & Roast! 🔥' : 'Let\'s Roast! 🔥');
+    ? (isSignUp ? 'Create Account & Battle!' : 'Log In!')
+    : (isSignUp ? 'Create Account & Roast!' : 'Log In!');
 
   return (
     <div className="modal-overlay" onClick={onClose}>
