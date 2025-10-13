@@ -46,7 +46,7 @@ function Leaderboard() {
   
     const interval = setInterval(() => {
       fetchLeaderboard(activeTab);
-    }, 60000);
+    }, 20000);
     
     return () => clearInterval(interval);
   }, [activeTab, fetchLeaderboard]);
