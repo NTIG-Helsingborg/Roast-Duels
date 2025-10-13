@@ -6,11 +6,13 @@ import Leaderboard from './components/Leaderboard'
 import LandingPage from './components/LandingPage'
 import MuteButton from './components/MuteButton'
 import MusicPlayer from './components/MusicPlayer'
+import DrawingCanvas from './components/DrawingCanvas'
+import { useButtonSounds } from './components/useButtonSounds'
 
 function App() {
   const [showGame, setShowGame] = useState(false)
   const [gameMode, setGameMode] = useState('single')
-  const [roasts, setRoasts] = useState([])
+  const { playReload, playGunshot } = useButtonSounds()
 
   const handleStartGame = (mode) => {
     setGameMode(mode)
@@ -18,40 +20,39 @@ function App() {
   }
 
   const handleBackToLanding = () => {
+    playGunshot()
     setShowGame(false)
   }
 
-  const handleRoastSubmitted = (roastData) => {
-    setRoasts(prevRoasts => [roastData, ...prevRoasts])
-  }
-
-  if (!showGame) {
-    return (
-      <>
-        <LandingPage onStartGame={handleStartGame} />
-        <MusicPlayer />
-      </>
-    )
-  }
-
   return (
-    <div className="app-wrapper">
-      <div className="game-header">
-        <button className="back-button" onClick={handleBackToLanding}>
-          ← Back to Home
-        </button>
-        <MuteButton />
-      </div>
-      {gameMode === 'multiplayer' ? (
-        <DualGamePanel onRoastSubmitted={handleRoastSubmitted} />
+    <>
+      {/* DrawingCanvas with delay only on landing page, muted on game pages */}
+      <DrawingCanvas key={showGame ? 'game' : 'landing'} startDelay={!showGame ? 5000 : 0} muted={showGame} />
+      {!showGame ? (
+        <LandingPage onStartGame={handleStartGame} />
       ) : (
-        <div className="game-container">
-          <GamePanel onRoastSubmitted={handleRoastSubmitted} />
-          <Leaderboard roasts={roasts} />
+        <div className="app-wrapper">
+          <div className="game-header">
+            <button 
+              className="back-button"
+              onMouseEnter={playReload}
+              onClick={handleBackToLanding}>
+              ← Back to Home
+            </button>
+            <MuteButton />
+          </div>
+          {gameMode === 'multiplayer' ? (
+            <DualGamePanel />
+          ) : (
+            <div className="game-container">
+              <GamePanel />
+              <Leaderboard />
+            </div>
+          )}
         </div>
       )}
       <MusicPlayer />
-    </div>
+    </>
   )
 }
 

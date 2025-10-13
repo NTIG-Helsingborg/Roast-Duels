@@ -6,10 +6,14 @@ import song4 from '../assets/music/song_4.mp3';
 import song5 from '../assets/music/song_5.mp3';
 import song6 from '../assets/music/song_6.mp3';
 
-const songs = [song1, song2, song3, song4, song5, song6];
+const songs = [song6, song3];
 
 export default function MusicPlayer() {
   const audioRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const sourceRef = useRef(null);
+  const gainNodeRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [muted, setMuted] = useState(() => {
     try {
@@ -18,22 +22,16 @@ export default function MusicPlayer() {
       return false;
     }
   });
-  const [canPlay, setCanPlay] = useState(false); // Track if user has interacted
-
-  console.log('MusicPlayer rendered, currentIndex:', currentIndex, 'muted:', muted);
+  const [canPlay, setCanPlay] = useState(false);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * songs.length);
-    console.log('Setting random starting song:', randomIndex);
     setCurrentIndex(randomIndex);
   }, []);
 
-  // Listen for first user interaction anywhere on the page
   useEffect(() => {
     const enableAudio = () => {
-      console.log('User interacted, enabling audio');
       setCanPlay(true);
-      // Remove listeners after first interaction
       document.removeEventListener('click', enableAudio);
       document.removeEventListener('keydown', enableAudio);
     };
@@ -47,45 +45,72 @@ export default function MusicPlayer() {
     };
   }, []);
 
-  // Try to play audio when user has interacted and song changes
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !canPlay) {
-      console.log('Audio not ready:', { audio: !!audio, canPlay });
       return;
     }
 
-    console.log('Attempting to play audio, muted:', muted);
-    audio.muted = muted;
+    if (!audioContextRef.current) {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        
+        analyser.fftSize = 512;
+        analyser.smoothingTimeConstant = 0.7;
+        analyser.minDecibels = -90;
+        analyser.maxDecibels = -10;
+        
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = muted ? 0 : 0.5;
+        
+        const source = audioContext.createMediaElementSource(audio);
+        
+        source.connect(analyser);
+        analyser.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        audioContextRef.current = audioContext;
+        analyserRef.current = analyser;
+        sourceRef.current = source;
+        gainNodeRef.current = gainNode;
+        
+        // Store analyzer globally for components that mount later
+        window.audioAnalyser = analyser;
+        
+        window.dispatchEvent(new CustomEvent('audio-analyzer-ready', {
+          detail: { analyser }
+        }));
+      } catch (error) {
+        console.error('Failed to initialize audio analyzer:', error);
+      }
+    } else if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = muted ? 0 : 0.5;
+    }
     
     const playPromise = audio.play();
     if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          console.log('Audio started playing successfully');
-        })
-        .catch(error => {
-          console.log('Audio play failed:', error);
-        });
+      playPromise.catch(error => {
+        console.log('Audio play failed:', error);
+      });
     }
   }, [currentIndex, muted, canPlay]);
 
-  // Listen for mute button events
   useEffect(() => {
     const handleMute = (e) => {
       const isMuted = e.detail.muted;
       setMuted(isMuted);
-      if (audioRef.current && canPlay) {
-        audioRef.current.muted = isMuted;
+      
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = isMuted ? 0 : 0.5;
       }
     };
 
     window.addEventListener("audio-mute", handleMute);
     return () => window.removeEventListener("audio-mute", handleMute);
-  }, [canPlay]);
+  }, []);
 
   const handleEnded = () => {
-    console.log('Song ended, moving to next');
     setCurrentIndex((prev) => (prev + 1) % songs.length);
   };
 

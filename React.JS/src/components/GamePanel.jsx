@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import './Components.css';
+import { useButtonSounds } from './useButtonSounds';
 
 const MAX_CHARACTERS = 200; // Twitter-style character limit
 
-async function judgeRoast(roastText) {
+async function judgeRoast(roastText, username) {
   try {
     const response = await fetch('http://localhost:3001/api/judge-roast', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ roastText }),
+      body: JSON.stringify({ roastText, username }),
     });
 
     if (!response.ok) {
@@ -27,11 +28,41 @@ async function judgeRoast(roastText) {
   }
 }
 
-function GamePanel({ onRoastSubmitted }) {
+function GamePanel() {
+  const [playerName, setPlayerName] = useState('Solo Player');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState('Solo Player');
   const [roastText, setRoastText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(null);
   const [error, setError] = useState(null);
+  const { playReload, playGunshot } = useButtonSounds();
+
+  const handleNameClick = () => {
+    if (!isSubmitting) {
+      setIsEditingName(true);
+      setTempName(playerName);
+    }
+  };
+
+  const handleNameChange = (e) => {
+    setTempName(e.target.value);
+  };
+
+  const handleNameBlur = () => {
+    setIsEditingName(false);
+    if (tempName.trim()) {
+      setPlayerName(tempName.trim());
+    } else {
+      setTempName(playerName);
+    }
+  };
+
+  const handleNameKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
+  };
 
   const handleSubmit = async () => {
     if (!roastText.trim()) {
@@ -39,23 +70,21 @@ function GamePanel({ onRoastSubmitted }) {
       return;
     }
 
+    console.log('🎯 Submit clicked - starting judgment...');
     setIsSubmitting(true);
     setError(null);
     setScore(null);
 
     try {
-      const judgedScore = await judgeRoast(roastText);
+      const judgedScore = await judgeRoast(roastText, playerName);
+      console.log('✅ Score received:', judgedScore);
       setScore(judgedScore);
       
-      // Pass the roast data to parent component for leaderboard
-      if (onRoastSubmitted) {
-        onRoastSubmitted({
-          text: roastText,
-          score: judgedScore,
-          author: 'You',
-          timestamp: Date.now(),
-        });
-      }
+      // Small delay to ensure score is rendered before sound plays
+      setTimeout(() => {
+        console.log('🔫 Playing gunshot sound');
+        playGunshot();
+      }, 100);
       
       // Clear the input after successful submission
       setTimeout(() => {
@@ -86,6 +115,28 @@ function GamePanel({ onRoastSubmitted }) {
 
   return (
     <div className="component-container game-panel">
+      {isEditingName ? (
+        <input
+          type="text"
+          className="player-title-edit"
+          value={tempName}
+          onChange={handleNameChange}
+          onBlur={handleNameBlur}
+          onKeyPress={handleNameKeyPress}
+          maxLength={20}
+          autoFocus
+        />
+      ) : (
+        <h2 
+          className="solo-player" 
+          onClick={handleNameClick}
+          style={{ cursor: !isSubmitting ? 'pointer' : 'default' }}
+          title="Click to edit name"
+        >
+          {playerName}
+        </h2>
+      )}
+      
       <div className="input-group">
         <label htmlFor="roast-input">Enter your roast:</label>
         <input
@@ -109,7 +160,8 @@ function GamePanel({ onRoastSubmitted }) {
       </div>
       
       <button 
-        className="btn-primary" 
+        className="btn-primary"
+        onMouseEnter={playReload}
         onClick={handleSubmit}
         disabled={isSubmitting || !roastText.trim() || isOverLimit}
       >

@@ -1,26 +1,105 @@
 import React, { useEffect, useRef, useState } from 'react'
 import opentype from 'opentype.js'
+import sprayPaintSound from '../assets/spraypaintsound.mp3'
+import { useAudioReactive } from './useAudioReactive'
 import './Components.css'
+import { motion } from 'framer-motion'
 
-function AnimatedTitle({ title = "Roast Battles", className = "" }) {
+function AnimatedTitle({ 
+  title = "Roast Battles", 
+  className = "",
+  soundVolume = 0.3,
+  soundPlaybackRate = 1.0,
+  soundEnabled = true,
+  soundStartTime = 1,
+  soundEndTime = 5
+}) {
   const canvasRef = useRef(null)
   const titleRef = useRef(null)
+  const measureRef = useRef(null) // NEW: for measuring without scale
   const stageRef = useRef(null)
   const animationRef = useRef(null)
   const [textTraced, setTextTraced] = useState(false)
   const [font, setFont] = useState(null)
   const animationStarted = useRef(false)
+  const [shouldPlaySound, setShouldPlaySound] = useState(false)
+  const [userHasInteracted, setUserHasInteracted] = useState(false)
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
+  const soundTimeoutRef = useRef(null)
+  const audioRef = useRef(null)
+  const [audioKey] = useState(() => Date.now() + Math.random())
   
-  // Use the same gradient colors as the H1
+  // Initialize audio delay based on whether we've animated before
+  const [shouldDelayAudio, setShouldDelayAudio] = useState(() => {
+    try {
+      // If we've animated before, no delay needed
+      return sessionStorage.getItem('titleAnimated') !== 'true'
+    } catch {
+      return true // Default to delay on first visit
+    }
+  })
+  
+  // Keep audio-reactive hook always active, but with delay only on first animation
+  const audioData = useAudioReactive(true, shouldDelayAudio ? 1000 : 0)
+  
+  // Debug: Log when audioData changes
+  useEffect(() => {
+    if (audioData.scale !== 1) {
+      console.log('[AnimatedTitle] 🎵 Audio pulse:', audioData.scale.toFixed(3))
+    }
+  }, [audioData.scale])
+  
+  // Debug: Log delay changes
+  useEffect(() => {
+    console.log('[AnimatedTitle] Audio delay setting:', shouldDelayAudio ? '1000ms (waiting for animation)' : '0ms (instant sync)')
+  }, [shouldDelayAudio])
+  
   const traceColors = ["#00d9ff", "#0dc6e7", "#26c9e8", "#1fb5d1"]
 
-  // Load the custom font
   useEffect(() => {
-    // Reset state on mount
+    const handleMouseMove = (e) => {
+      setCursorPosition({ x: e.clientX, y: e.clientY })
+    }
+    if (!userHasInteracted) {
+      document.addEventListener('mousemove', handleMouseMove)
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [userHasInteracted])
+
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      setUserHasInteracted(true)
+      document.removeEventListener('click', handleUserInteraction)
+      document.removeEventListener('keydown', handleUserInteraction)
+      document.removeEventListener('touchstart', handleUserInteraction)
+    }
+    document.addEventListener('click', handleUserInteraction)
+    document.addEventListener('keydown', handleUserInteraction)
+    document.addEventListener('touchstart', handleUserInteraction)
+    return () => {
+      document.removeEventListener('click', handleUserInteraction)
+      document.removeEventListener('keydown', handleUserInteraction)
+      document.removeEventListener('touchstart', handleUserInteraction)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Check if we've animated before in this session
+    const hasAnimated = sessionStorage.getItem('titleAnimated') === 'true'
+    
+    if (hasAnimated) {
+      console.log('[AnimatedTitle] ⚡ Returning - run animation but with instant audio sync')
+      setShouldDelayAudio(false) // No audio delay on return visits
+    } else {
+      console.log('[AnimatedTitle] 🎨 First visit - starting animation with delayed audio')
+    }
+    
+    // Always reset these for the animation to run
     setTextTraced(false)
     animationStarted.current = false
-
-    // No failsafe: animation and H1 will always replay after restart
+    
     const loadFont = async () => {
       try {
         const fontPath = '/src/assets/fonts/snakehead-graffiti.regular.otf'
@@ -35,21 +114,50 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
   }, [])
 
   useEffect(() => {
-    // Only run once per mount
+    setShouldPlaySound(true)
+    const timeout = setTimeout(() => {
+      setShouldPlaySound(false)
+    }, 3300)
+    return () => {
+      clearTimeout(timeout)
+      setShouldPlaySound(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = soundVolume;
+    audio.playbackRate = soundPlaybackRate;
+    audio.loop = false;
+    if (shouldPlaySound && userHasInteracted) {
+      audio.currentTime = 12;
+      audio.play()
+        .then(() => {
+          console.log('✅ Audio started successfully');
+        })
+        .catch((error) => {
+          console.log('❌ Audio play failed:', error);
+        });
+    } else {
+      audio.pause();
+    }
+    return () => {
+      if (audio) {
+        audio.pause();
+      }
+    };
+  }, [shouldPlaySound, userHasInteracted, soundVolume, soundPlaybackRate]);
+
+  useEffect(() => {
     let didRun = false
     const startAnimation = () => {
-      console.log('[AnimatedTitle] Attempting to start animation...')
-      if (didRun || animationStarted.current) {
-        console.log('[AnimatedTitle] Animation already started, skipping.')
-        return
-      }
+      if (didRun || animationStarted.current) return
       didRun = true
       animationStarted.current = true
 
-      // If CreateJS is missing, fallback to showing H1 only
-      if (typeof window === 'undefined' || !canvasRef.current || !titleRef.current) {
+      if (typeof window === 'undefined' || !canvasRef.current || !measureRef.current) {
         setTextTraced(true)
-        console.log('[AnimatedTitle] Fallback: window/canvas/titleRef missing, showing H1 only.')
         return
       }
 
@@ -62,17 +170,20 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         window.createjs.Ticker.addEventListener("tick", stage)
       }
 
-      // Calculate responsive font size to match CSS behavior exactly
-      // CSS uses font-size: 15vw for all screen sizes, so we should too
       let actualFontSize = window.innerWidth * 0.15
 
       const canvas = canvasRef.current
-      const titleElement = titleRef.current
+      const titleElement = measureRef.current // CHANGED: use measureRef
       const titleRect = titleElement.getBoundingClientRect()
       
-      // Set canvas size to match the H1 element dimensions for proper alignment
-      canvas.width = titleRect.width
-      canvas.height = titleRect.height // Use full H1 element height for proper alignment
+      const extraSpace = 60
+      canvas.width = titleRect.width + (extraSpace * 2)
+      canvas.height = titleRect.height + (extraSpace * 2)
+
+      if (stage) {
+        stage.x = extraSpace
+        stage.y = extraSpace
+      }
 
       const createParticle = (x, y, rad, alpha, color) => {
         if (!stage) return
@@ -86,7 +197,6 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
 
       const getTextPathPoints = () => {
         if (!font) {
-          console.log('[AnimatedTitle] Using fallback points, font not loaded.')
           return createFallbackPoints()
         }
         try {
@@ -94,10 +204,11 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
           const testCtx = testCanvas.getContext('2d')
           testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
           const fontSize = actualFontSize
-          // Calculate baseline offset using actual text metrics for accurate positioning
           const metrics = testCtx.measureText(title)
           const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const baselineOffset = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
+          const widthRatio = window.innerWidth / 1200
+          const adjustment = metrics.actualBoundingBoxAscent * (widthRatio - 1) * 0.1
+          const baselineOffset = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent + adjustment
           const path = font.getPath(title, 0, baselineOffset, fontSize)
           const tempCanvas = document.createElement('canvas')
           const ctx = tempCanvas.getContext('2d')
@@ -118,14 +229,13 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
           const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height)
           const data = imageData.data
           const points = []
-          // Much more aggressive sampling for large screens to prevent excessive dots
           let sampleRate
           if (fontSize <= 60) {
-            sampleRate = 3 // Dense for mobile
+            sampleRate = 3
           } else if (fontSize <= 120) {
-            sampleRate = 6 // Medium for tablet
+            sampleRate = 6
           } else {
-            sampleRate = 12 // Sparse for desktop
+            sampleRate = 12
           }
           
           for (let y = 0; y < tempCanvas.height; y += sampleRate) {
@@ -133,19 +243,17 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
               const index = (y * tempCanvas.width + x) * 4
               const alpha = data[index + 3]
               if (alpha > 100) {
-                // Fixed spray count based on screen size
                 let sprayCount
                 if (fontSize <= 60) {
-                  sprayCount = Math.floor(Math.random() * 3) + 2 // 2-4 for mobile
+                  sprayCount = Math.floor(Math.random() * 3) + 2
                 } else if (fontSize <= 120) {
-                  sprayCount = Math.floor(Math.random() * 2) + 2 // 2-3 for tablet
+                  sprayCount = Math.floor(Math.random() * 2) + 2
                 } else {
-                  sprayCount = Math.floor(Math.random() * 2) + 1 // 1-2 for desktop
+                  sprayCount = Math.floor(Math.random() * 2) + 1
                 }
                 
                 for (let i = 0; i < sprayCount; i++) {
-                  // Make spray radius responsive to font size
-                  const baseSprayRadius = Math.max(1, fontSize / 40) // Scale with font size
+                  const baseSprayRadius = Math.max(1, fontSize / 40)
                   const sprayRadius = Math.random() * baseSprayRadius + baseSprayRadius * 0.5
                   const angle = Math.random() * Math.PI * 2
                   points.push({
@@ -158,7 +266,6 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
             }
           }
           tempCanvas.remove()
-          console.log('[AnimatedTitle] Sampled', points.length, 'spray points.')
           return points
         } catch (error) {
           console.warn('[AnimatedTitle] Error processing font path:', error)
@@ -170,36 +277,35 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         const points = []
         const textWidth = titleRect.width
         const textHeight = titleRect.height
-        const baseSprayRadius = Math.max(1, actualFontSize / 40) // Scale with font size
+        const baseSprayRadius = Math.max(1, actualFontSize / 40)
         
-        // Fixed step sizes based on font size to prevent excessive dots
         let stepSize
         if (actualFontSize <= 60) {
-          stepSize = 4 // Dense for mobile
+          stepSize = 4
         } else if (actualFontSize <= 120) {
-          stepSize = 8 // Medium for tablet
+          stepSize = 8
         } else {
-          stepSize = 15 // Sparse for desktop
+          stepSize = 15
         }
         
         for (let x = 0; x < textWidth; x += stepSize) {
-          // Center the fallback points with the text using the same calculation as main path
           const testCanvas = document.createElement('canvas')
           const testCtx = testCanvas.getContext('2d')
           testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
           const metrics = testCtx.measureText(title)
           const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
+          const widthRatio = window.innerWidth / 1200
+          const adjustment = metrics.actualBoundingBoxAscent * (widthRatio - 1) * 0.1
+          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent + adjustment
           const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * (actualFontSize * 0.1)
           
-          // Fixed spray count based on screen size
           let sprayCount
           if (actualFontSize <= 60) {
-            sprayCount = Math.floor(Math.random() * 3) + 3 // 3-5 for mobile
+            sprayCount = Math.floor(Math.random() * 3) + 3
           } else if (actualFontSize <= 120) {
-            sprayCount = Math.floor(Math.random() * 2) + 3 // 3-4 for tablet
+            sprayCount = Math.floor(Math.random() * 2) + 3
           } else {
-            sprayCount = Math.floor(Math.random() * 2) + 2 // 2-3 for desktop
+            sprayCount = Math.floor(Math.random() * 2) + 2
           }
           for (let i = 0; i < sprayCount; i++) {
             const sprayRadius = Math.random() * baseSprayRadius * 2 + baseSprayRadius
@@ -211,34 +317,41 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
             })
           }
         }
-        console.log('[AnimatedTitle] Fallback points:', points.length)
         return points
       }
 
       const createTextTrace = () => {
         const points = getTextPathPoints()
         if (!stage) {
-          // If CreateJS is missing, skip spray, just show H1 after delay
           setTimeout(() => {
             setTextTraced(true)
-            console.log('[AnimatedTitle] Fallback: No CreateJS, showing H1 only.')
+            setShouldDelayAudio(false)
+            try {
+              sessionStorage.setItem('titleAnimated', 'true')
+            } catch (e) {}
           }, 1000)
           return
         }
+        
         points.forEach((point) => {
           setTimeout(() => {
             const color = traceColors[Math.floor(Math.random() * traceColors.length)]
-            // Make particle size responsive to font size
             const baseSize = Math.max(1, actualFontSize / 50)
             const size = Math.random() * baseSize + baseSize * 0.5
             const alpha = Math.random() * 0.4 + 0.6
             createParticle(point.x, point.y, size, alpha, color)
           }, point.delay)
         })
+        
         const maxDelay = Math.max(...points.map(p => p.delay))
+        
         setTimeout(() => {
           setTextTraced(true)
-          console.log('[AnimatedTitle] Animation complete, H1 should fade in.')
+          setShouldDelayAudio(false)
+          console.log('[AnimatedTitle] 🎵 Animation complete, audio sync active')
+          try {
+            sessionStorage.setItem('titleAnimated', 'true')
+          } catch (e) {}
         }, maxDelay + 1000)
       }
 
@@ -246,72 +359,93 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         createTextTrace()
       }, 500)
 
-      // Cleanup
       return () => {
         if (animationRef.current) clearTimeout(animationRef.current)
+        if (soundTimeoutRef.current) clearTimeout(soundTimeoutRef.current)
+        setShouldPlaySound(false)
         if (stage) {
           window.createjs.Ticker.removeEventListener("tick", stage)
           stage.removeAllChildren()
           stage.removeAllEventListeners()
         }
-        // Do NOT reset animationStarted.current here
       }
     }
 
-    // Wait for font to load, but start after max 1.5 seconds regardless
     if (font) {
       startAnimation()
     } else {
       let fontCheckCount = 0
       const fontCheck = setInterval(() => {
         fontCheckCount++
-        if (font || fontCheckCount > 30) { // Max 1.5 seconds wait (30 * 50ms)
+        if (font || fontCheckCount > 30) {
           clearInterval(fontCheck)
           startAnimation()
         }
       }, 50)
-      // Cleanup polling
       return () => clearInterval(fontCheck)
     }
-  }, [font]) // Add font as dependency so animation restarts when font loads
-
-
+  }, [font])
 
   return (
-    <div className={`animated-title-container ${className}`} style={{ position: 'relative', display: 'inline-block' }}>
-      {/* Hidden title for positioning reference - completely invisible during tracing */}
-      <h1 
-        ref={titleRef}
-        className="game-title" 
+    <div className={`animated-title-container ${className}`} style={{ 
+      position: 'relative', 
+      display: 'inline-block',
+      overflow: 'visible'
+    }}>
+      <motion.div
+        initial={{ scale: 5 }}
+        animate={
+          textTraced
+            ? {
+                scale: [5, 1.06, 0.98, 1],
+                transition: {
+                  duration: 0.6,
+                  times: [0, 0.65, 0.85, 1],
+                  ease: 'easeOut'
+                }
+              }
+            : {}
+        }
         style={{ 
           position: 'relative',
           zIndex: 3,
-          opacity: textTraced ? 1 : 0, // Completely hidden until traced
-          transition: 'opacity 1s ease',
-          visibility: textTraced ? 'visible' : 'hidden' // Also hide from layout
+          opacity: textTraced ? 1 : 0,
+          visibility: textTraced ? 'visible' : 'hidden',
+          willChange: 'transform'
         }}
       >
-        {title}
-      </h1>
+        <h1 
+          ref={titleRef}
+          className="game-title" 
+          style={{ 
+            position: 'relative',
+            zIndex: 3,
+            opacity: 1,
+            transform: `scale(${audioData.scale})`,
+            filter: `drop-shadow(0 0 ${6 + audioData.glow * 10}px rgba(0, 217, 255, ${audioData.glow * 0.4}))`,
+            transformOrigin: 'center center',
+            willChange: 'transform, filter'
+          }}
+        >
+          {title}
+        </h1>
+      </motion.div>
       
-      {/* Canvas for text tracing particles */}
       <canvas 
         ref={canvasRef}
         style={{
           position: 'absolute',
           top: '50%',
-          left: '0px',
-          width: '100%',
-          height: 'auto',
-          transform: 'translateY(-50%)',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
           zIndex: 2,
-          pointerEvents: 'none' // Don't block clicks
+          pointerEvents: 'none'
         }}
       />
       
-      {/* Invisible placeholder to maintain layout during tracing */}
       {!textTraced && (
         <h1 
+          ref={measureRef}
           className="game-title" 
           style={{ 
             position: 'absolute',
@@ -325,6 +459,38 @@ function AnimatedTitle({ title = "Roast Battles", className = "" }) {
         >
           {title}
         </h1>
+      )}
+      
+      <audio
+        key={audioKey}
+        ref={audioRef}
+        src={sprayPaintSound}
+        preload="auto"
+      />
+      
+      {!userHasInteracted && (
+        <div 
+          style={{
+            position: 'fixed',
+            left: `${cursorPosition.x + 15}px`,
+            top: `${cursorPosition.y - 40}px`,
+            background: 'rgba(0, 0, 0, 0.8)',
+            color: '#00d9ff',
+            padding: '6px 10px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            fontFamily: 'Arial, sans-serif',
+            zIndex: 9999,
+            pointerEvents: 'none',
+            transform: 'translate(0, 0)',
+            transition: 'all 0.1s ease-out',
+            boxShadow: '0 2px 8px rgba(0, 217, 255, 0.3)',
+            border: '1px solid rgba(0, 217, 255, 0.5)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          🔊 Click for sound
+        </div>
       )}
     </div>
   )
