@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
 
-function LoginModal({ isOpen, onClose, onLogin }) {
+function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -56,7 +56,16 @@ function LoginModal({ isOpen, onClose, onLogin }) {
     }
 
     playGunshot();
-    onLogin(username.trim(), password);
+    
+    // Handle dual mode vs single mode
+    if (isDualMode) {
+      const player1Name = username.trim();
+      const player2Name = username.trim() + ' 2';
+      onLogin(player1Name, player2Name, password);
+    } else {
+      onLogin(username.trim(), password);
+    }
+    
     setUsername('');
     setPassword('');
     setConfirmPassword('');
@@ -76,55 +85,129 @@ function LoginModal({ isOpen, onClose, onLogin }) {
     setConfirmPassword(''); // Clear confirm password when switching modes
   };
 
+  const modalTitle = isDualMode 
+    ? (isSignUp ? 'Create Account' : 'Enter the Battle')
+    : (isSignUp ? 'Join the Arena' : 'Enter the Arena');
+
+  const submitButtonText = isDualMode
+    ? (isSignUp ? 'Create Account & Battle! 🔥' : 'Let\'s Battle! 🔥')
+    : (isSignUp ? 'Create Account & Roast! 🔥' : 'Let\'s Roast! 🔥');
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modal-title">{isSignUp ? 'Join the Arena' : 'Enter the Arena'}</h2>
+      <div className={`modal-content ${isDualMode ? 'dual-modal' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">{modalTitle}</h2>
         
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="input-group">
-            <label htmlFor="username-input">
-              Choose Your Tag: 
-              <span className="char-counter"> ({username.length}/{MAX_USERNAME_LENGTH})</span>
-            </label>
-            <input
-              id="username-input"
-              type="text"
-              placeholder="Enter your name..."
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyPress={handleKeyPress}
-              maxLength={MAX_USERNAME_LENGTH}
-              autoFocus
-            />
-          </div>
+          {isDualMode ? (
+            // Dual mode layout
+            <div className="dual-login-container">
+              <div className="player-login-section">
+                <div className="input-group">
+                  <label htmlFor="username-input">
+                    Player Name: 
+                    <span className="char-counter"> ({username.length}/{MAX_USERNAME_LENGTH})</span>
+                  </label>
+                  <input
+                    id="username-input"
+                    type="text"
+                    placeholder="Enter your name..."
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    maxLength={MAX_USERNAME_LENGTH}
+                    autoFocus
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="password-input">Password:</label>
+                  <input
+                    id="password-input"
+                    type="password"
+                    placeholder="Enter your password..."
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    maxLength={50}
+                  />
+                </div>
+                {isSignUp && (
+                  <div className="input-group">
+                    <label htmlFor="confirm-password-input">Confirm Password:</label>
+                    <input
+                      id="confirm-password-input"
+                      type="password"
+                      placeholder="Re-enter your password..."
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      maxLength={50}
+                    />
+                  </div>
+                )}
+              </div>
 
-          <div className="input-group">
-            <label htmlFor="password-input">Enter Password:</label>
-            <input
-              id="password-input"
-              type="password"
-              placeholder="Enter your password..."
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyPress={handleKeyPress}
-              maxLength={50}
-            />
-          </div>
+              {!isSignUp && (
+                <>
+                  <div className="vs-divider">VS</div>
 
-          {isSignUp && (
-            <div className="input-group">
-              <label htmlFor="confirm-password-input">Confirm Password:</label>
-              <input
-                id="confirm-password-input"
-                type="password"
-                placeholder="Re-enter your password..."
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
-                maxLength={50}
-              />
+                  <div className="player-login-section">
+                    <div className="player2-preview">
+                      <div className="preview-label">Player 2 will be:</div>
+                      <div className="preview-name">{username ? username + ' 2' : ''}</div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+          ) : (
+            // Single mode layout
+            <>
+              <div className="input-group">
+                <label htmlFor="username-input">
+                  Choose Your Tag: 
+                  <span className="char-counter"> ({username.length}/{MAX_USERNAME_LENGTH})</span>
+                </label>
+                <input
+                  id="username-input"
+                  type="text"
+                  placeholder="Enter your name..."
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  maxLength={MAX_USERNAME_LENGTH}
+                  autoFocus
+                />
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="password-input">Enter Password:</label>
+                <input
+                  id="password-input"
+                  type="password"
+                  placeholder="Enter your password..."
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  maxLength={50}
+                />
+              </div>
+
+              {isSignUp && (
+                <div className="input-group">
+                  <label htmlFor="confirm-password-input">Confirm Password:</label>
+                  <input
+                    id="confirm-password-input"
+                    type="password"
+                    placeholder="Re-enter your password..."
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    maxLength={50}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {error && (
@@ -138,7 +221,7 @@ function LoginModal({ isOpen, onClose, onLogin }) {
             className="modal-submit-btn"
             onMouseEnter={playReload}
           >
-            {isSignUp ? 'Create Account & Roast! 🔥' : 'Let\'s Roast! 🔥'}
+            {submitButtonText}
           </button>
 
           <button 
