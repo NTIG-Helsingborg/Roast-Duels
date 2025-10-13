@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
 import LoginModal from './LoginModal';
+import { auth } from '../utils/auth';
 
-const MAX_CHARACTERS = 200; // Twitter-style character limit
+const MAX_CHARACTERS = 200;
 
-async function judgeRoast(roastText, username) {
+async function judgeRoast(roastText, userId) {
   try {
     const response = await fetch('http://localhost:3001/api/judge-roast', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ roastText, username }),
+      body: JSON.stringify({ roastText, userId }),
     });
 
     if (!response.ok) {
@@ -31,7 +32,6 @@ async function judgeRoast(roastText, username) {
 
 function GamePanel() {
   const [playerName, setPlayerName] = useState('');
-  const [password, setPassword] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
@@ -41,9 +41,20 @@ function GamePanel() {
   const [error, setError] = useState(null);
   const { playReload, playGunshot } = useButtonSounds();
 
-  const handleLogin = (username, pass) => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const data = await auth.verify();
+      if (data) {
+        setPlayerName(data.username);
+        setTempName(data.username);
+        setShowLoginModal(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogin = (username) => {
     setPlayerName(username);
-    setPassword(pass);
     setTempName(username);
     setShowLoginModal(false);
   };
@@ -59,12 +70,23 @@ function GamePanel() {
     setTempName(e.target.value);
   };
 
-  const handleNameBlur = () => {
+  const handleNameBlur = async () => {
     setIsEditingName(false);
-    if (tempName.trim()) {
-      setPlayerName(tempName.trim());
-    } else {
+    const newName = tempName.trim();
+    
+    if (!newName || newName === playerName) {
       setTempName(playerName);
+      return;
+    }
+
+    try {
+      const data = await auth.updateUsername(newName);
+      setPlayerName(data.username);
+      setTempName(data.username);
+    } catch (err) {
+      setError(err.message);
+      setTempName(playerName);
+      setTimeout(() => setError(null), 3000);
     }
   };
 
@@ -74,29 +96,35 @@ function GamePanel() {
     }
   };
 
+  const handleLogout = () => {
+    auth.logout();
+    setPlayerName('');
+    setTempName('');
+    setRoastText('');
+    setScore(null);
+    setError(null);
+    setShowLoginModal(true);
+  };
+
   const handleSubmit = async () => {
     if (!roastText.trim()) {
       setError('Please enter a roast!');
       return;
     }
 
-    console.log('🎯 Submit clicked - starting judgment...');
     setIsSubmitting(true);
     setError(null);
     setScore(null);
 
     try {
-      const judgedScore = await judgeRoast(roastText, playerName);
-      console.log('✅ Score received:', judgedScore);
+      const userId = auth.getUserId();
+      const judgedScore = await judgeRoast(roastText, userId);
       setScore(judgedScore);
       
-      // Small delay to ensure score is rendered before sound plays
       setTimeout(() => {
-        console.log('🔫 Playing gunshot sound');
         playGunshot();
       }, 100);
       
-      // Clear the input after successful submission
       setTimeout(() => {
         setRoastText('');
         setScore(null);
@@ -132,27 +160,44 @@ function GamePanel() {
       />
       
       <div className="component-container game-panel">
-        {isEditingName ? (
-        <input
-          type="text"
-          className="player-title-edit"
-          value={tempName}
-          onChange={handleNameChange}
-          onBlur={handleNameBlur}
-          onKeyPress={handleNameKeyPress}
-          maxLength={20}
-          autoFocus
-        />
-      ) : (
-        <h2 
-          className="solo-player" 
-          onClick={handleNameClick}
-          style={{ cursor: !isSubmitting ? 'pointer' : 'default' }}
-          title="Click to edit name"
-        >
-          {playerName}
-        </h2>
-      )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          {isEditingName ? (
+            <input
+              type="text"
+              className="player-title-edit"
+              value={tempName}
+              onChange={handleNameChange}
+              onBlur={handleNameBlur}
+              onKeyPress={handleNameKeyPress}
+              maxLength={20}
+              autoFocus
+            />
+          ) : (
+            <h2 
+              className="solo-player" 
+              onClick={handleNameClick}
+              style={{ cursor: !isSubmitting ? 'pointer' : 'default', margin: 0 }}
+              title="Click to edit name"
+            >
+              {playerName}
+            </h2>
+          )}
+          <button 
+            onClick={handleLogout}
+            onMouseEnter={playReload}
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.85rem',
+              background: 'rgba(255, 68, 68, 0.2)',
+              border: '1px solid rgba(255, 68, 68, 0.5)',
+              borderRadius: '4px',
+              color: '#ff4444',
+              cursor: 'pointer'
+            }}
+          >
+            Logout
+          </button>
+        </div>
       
       <div className="input-group">
         <label htmlFor="roast-input">Enter your roast:</label>

@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Components.css';
 import Leaderboard from './Leaderboard';
 import { useButtonSounds } from './useButtonSounds';
 import LoginModal from './LoginModal';
+import { auth } from '../utils/auth';
 
 const MAX_CHARACTERS = 200;
 
-async function judgeRoast(roastText, username) {
+async function judgeRoast(roastText, userId) {
   try {
     const response = await fetch('http://localhost:3001/api/judge-roast', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ roastText, username }),
+      body: JSON.stringify({ roastText, userId }),
     });
 
     if (!response.ok) {
@@ -157,7 +158,6 @@ function PlayerPanel({
 function DualGamePanel() {
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
-  const [password, setPassword] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [player1Roast, setPlayer1Roast] = useState('');
   const [player2Roast, setPlayer2Roast] = useState('');
@@ -170,11 +170,37 @@ function DualGamePanel() {
   const [player2Error, setPlayer2Error] = useState(null);
   const { playReload, playGunshot } = useButtonSounds();
 
-  const handleLogin = (p1Name, p2Name, pass) => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const data = await auth.verify();
+      if (data) {
+        setPlayer1Name(data.username);
+        setPlayer2Name(data.username + ' 2');
+        setShowLoginModal(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogin = (p1Name, p2Name) => {
     setPlayer1Name(p1Name);
     setPlayer2Name(p2Name);
-    setPassword(pass);
     setShowLoginModal(false);
+  };
+
+  const handleLogout = () => {
+    auth.logout();
+    setPlayer1Name('');
+    setPlayer2Name('');
+    setPlayer1Roast('');
+    setPlayer2Roast('');
+    setPlayer1Ready(false);
+    setPlayer2Ready(false);
+    setPlayer1Score(null);
+    setPlayer2Score(null);
+    setPlayer1Error(null);
+    setPlayer2Error(null);
+    setShowLoginModal(true);
   };
 
   const handlePlayer1ReadyToggle = () => {
@@ -204,19 +230,17 @@ function DualGamePanel() {
       setPlayer2Score(null);
 
       try {
-        // Judge both roasts simultaneously
+        const userId = auth.getUserId();
         const [score1, score2] = await Promise.all([
-          judgeRoast(player1Roast, player1Name),
-          judgeRoast(player2Roast, player2Name)
+          judgeRoast(player1Roast, userId),
+          judgeRoast(player2Roast, userId)
         ]);
 
         setPlayer1Score(score1);
         setPlayer2Score(score2);
 
-        // Play gunshot sound when scores are revealed
         playGunshot();
 
-        // Reset after 3 seconds
         setTimeout(() => {
           setPlayer1Roast('');
           setPlayer2Roast('');
@@ -253,6 +277,23 @@ function DualGamePanel() {
       />
       
       <div className="dual-game-layout">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button 
+            onClick={handleLogout}
+            onMouseEnter={playReload}
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.85rem',
+              background: 'rgba(255, 68, 68, 0.2)',
+              border: '1px solid rgba(255, 68, 68, 0.5)',
+              borderRadius: '4px',
+              color: '#ff4444',
+              cursor: 'pointer'
+            }}
+          >
+            Logout
+          </button>
+        </div>
         <div className="dual-game-container">
           <PlayerPanel 
             playerName={player1Name}

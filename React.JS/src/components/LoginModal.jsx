@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
+import { auth } from '../utils/auth';
 
 function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
   const [username, setUsername] = useState('');
@@ -8,13 +9,14 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { playReload, playGunshot } = useButtonSounds();
 
   if (!isOpen) return null;
 
   const MAX_USERNAME_LENGTH = 15;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!username.trim()) {
@@ -27,8 +29,8 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
       return;
     }
 
-    if (username.trim().length < 2) {
-      setError('Username must be at least 2 characters!');
+    if (username.trim().length < 3) {
+      setError('Username must be at least 3 characters!');
       return;
     }
 
@@ -37,12 +39,11 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
       return;
     }
 
-    if (password.length < 4) {
-      setError('Password must be at least 4 characters!');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters!');
       return;
     }
 
-    // Check password confirmation only in sign-up mode
     if (isSignUp) {
       if (!confirmPassword.trim()) {
         setError('Please confirm your password!');
@@ -55,21 +56,30 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
       }
     }
 
-    playGunshot();
-    
-    // Handle dual mode vs single mode
-    if (isDualMode) {
-      const player1Name = username.trim();
-      const player2Name = username.trim() + ' 2';
-      onLogin(player1Name, player2Name, password);
-    } else {
-      onLogin(username.trim(), password);
-    }
-    
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
+    setIsLoading(true);
     setError('');
+
+    try {
+      const data = isSignUp 
+        ? await auth.register(username.trim(), password)
+        : await auth.login(username.trim(), password);
+      
+      playGunshot();
+      
+      if (isDualMode) {
+        onLogin(data.username, data.username + ' 2');
+      } else {
+        onLogin(data.username);
+      }
+      
+      setUsername('');
+      setPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -220,8 +230,9 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
             type="submit"
             className="modal-submit-btn"
             onMouseEnter={playReload}
+            disabled={isLoading}
           >
-            {submitButtonText}
+            {isLoading ? 'Loading...' : submitButtonText}
           </button>
 
           <button 

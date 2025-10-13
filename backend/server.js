@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, searchRoasts } from './db.js';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts } from './db.js';
 
 dotenv.config();
 
@@ -50,6 +50,10 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Username must be at least 3 characters' });
   }
 
+  if (/\s/.test(username)) {
+    return res.status(400).json({ error: 'Username cannot contain spaces' });
+  }
+
   if (password.length < 6) {
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
@@ -61,15 +65,13 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    
-    createUser(username, passwordHash);
-    
-    //Generate token to automatically log in after registration
+    const result = createUser(username, passwordHash);
     const token = generateToken(username);
     
     res.status(201).json({ 
       message: 'User registered successfully',
       username,
+      userId: result.lastInsertRowid,
       token
     });
   } catch (error) {
@@ -98,12 +100,12 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    //Generate JWT token
     const token = generateToken(user.username);
 
     res.json({ 
       message: 'Login successful',
       username: user.username,
+      userId: user.id,
       token
     });
   } catch (error) {
@@ -113,17 +115,56 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
+  const user = getUserByUsername(req.user.username);
   res.json({ 
     valid: true,
-    username: req.user.username 
+    username: user.username,
+    userId: user.id
   });
 });
 
-app.post('/api/judge-roast', async (req, res) => {
-  const { roastText, username } = req.body;
+app.put('/api/auth/update-username', authenticateToken, (req, res) => {
+  const { newUsername } = req.body;
 
-  if (!roastText || !username) {
-    return res.status(400).json({ error: 'Roast text and username are required' });
+  if (!newUsername || !newUsername.trim()) {
+    return res.status(400).json({ error: 'New username is required' });
+  }
+
+  if (newUsername.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters' });
+  }
+
+  if (/\s/.test(newUsername)) {
+    return res.status(400).json({ error: 'Username cannot contain spaces' });
+  }
+
+  try {
+    const user = getUserByUsername(req.user.username);
+    const existingUser = getUserByUsername(newUsername);
+    
+    if (existingUser && existingUser.id !== user.id) {
+      return res.status(409).json({ error: 'Username already taken' });
+    }
+
+    updateUsername(user.id, newUsername);
+    const newToken = generateToken(newUsername);
+    
+    res.json({ 
+      message: 'Username updated successfully',
+      username: newUsername,
+      token: newToken
+    });
+  } catch (error) {
+    console.error('Update username error:', error);
+    res.status(500).json({ error: 'Failed to update username' });
+  }
+});
+
+app.post('/api/judge-roast', async (req, res) => {
+  const { roastText, userId } = req.body;
+
+  if (!roastText || !userId) {
+    return res.status(400).json({ error: 'Roast text and user ID are required' });
   }
 
   try {
@@ -184,7 +225,7 @@ RESPONSE: Provide ONLY the final numerical score (0-100), nothing else.`
     const scoreMatch = aiResponse.match(/\b(\d+)\b/);
     if (scoreMatch) {
       const score = Math.min(100, Math.max(0, parseInt(scoreMatch[1])));
-      saveRoast(username, roastText, score);
+      saveRoast(userId, roastText, score);
       return res.json({ score });
     }
     
