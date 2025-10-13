@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent } from './db.js';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, searchRoasts } from './db.js';
 
 dotenv.config();
 
@@ -114,6 +114,21 @@ app.get('/api/leaderboard/recent', (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
     const results = getMostRecent(limit);
+    res.json(results);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/leaderboard/search', (req, res) => {
+  try {
+    const searchQuery = req.query.q;
+    if (!searchQuery || searchQuery.trim() === '') {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    const limit = parseInt(req.query.limit) || 100;
+    const results = searchRoasts(searchQuery.trim(), limit);
     res.json(results);
   } catch (error) {
     console.error('Error:', error);

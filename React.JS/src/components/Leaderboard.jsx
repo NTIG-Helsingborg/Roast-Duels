@@ -22,6 +22,7 @@ function Leaderboard() {
   const [roasts, setRoasts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchLeaderboard = useCallback(async (endpoint) => {
     setLoading(true);
@@ -40,16 +41,42 @@ function Leaderboard() {
     }
   }, []);
 
+  const searchDatabase = useCallback(async (query) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/leaderboard/search?q=${encodeURIComponent(query)}&limit=100`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Search failed: ${response.status}`);
+      }
+      const data = await response.json();
+      setRoasts(data);
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err.message);
+      setRoasts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    fetchLeaderboard(activeTab);
-    
-  
-    const interval = setInterval(() => {
+    if (searchQuery.trim()) {
+      searchDatabase(searchQuery);
+    } else {
       fetchLeaderboard(activeTab);
-    }, 20000);
-    
-    return () => clearInterval(interval);
-  }, [activeTab, fetchLeaderboard]);
+    }
+  }, [searchQuery, activeTab, fetchLeaderboard, searchDatabase]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      const interval = setInterval(() => {
+        fetchLeaderboard(activeTab);
+      }, 20000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, searchQuery, fetchLeaderboard]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -91,6 +118,25 @@ function Leaderboard() {
         </button>
       </div>
 
+      <div className="leaderboard-search">
+        <input
+          type="text"
+          placeholder="Search players or roasts..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="leaderboard-search-input" 
+        />
+        {searchQuery && (
+          <button 
+            onClick={() => setSearchQuery('')}
+            className="search-clear-btn"
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       <div className={`leaderboard-entries ${activeTab === 'recent' ? 'recent-tab' : ''}`}>
         {loading ? (
           <div className="leaderboard-message">Loading...</div>
@@ -98,7 +144,7 @@ function Leaderboard() {
           <div className="leaderboard-message">Error: {error}</div>
         ) : roasts.length === 0 ? (
           <div className="leaderboard-message">
-            No roasts yet. Be the first to submit!
+            {searchQuery ? `No results found for "${searchQuery}"` : 'No roasts yet. Be the first to submit!'}
           </div>
         ) : (
           roasts.map((roast, index) => (

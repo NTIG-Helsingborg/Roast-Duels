@@ -51,5 +51,17 @@ export const getMostRecent = (limit = 50) => {
   return query.all(limit);
 };
 
+export const searchRoasts = (searchQuery, limit = 50) => {
+  const query = db.prepare(`
+    SELECT id, username, roast, score, date 
+    FROM roasts 
+    WHERE username LIKE ? OR roast LIKE ?
+    ORDER BY score DESC, date DESC 
+    LIMIT ?
+  `);
+  const searchPattern = `%${searchQuery}%`;
+  return query.all(searchPattern, searchPattern, limit);
+};
+
 export default db;
 
