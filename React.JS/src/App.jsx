@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import './App.css'
 import GamePanel from './components/GamePanel'
+import DualGamePanel from './components/DualGamePanel'
 import Leaderboard from './components/Leaderboard'
 import LandingPage from './components/LandingPage'
 import MuteButton from './components/MuteButton'

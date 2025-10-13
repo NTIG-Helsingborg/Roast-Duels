@@ -6,10 +6,9 @@ import { useButtonSounds } from './useButtonSounds'
 
 function LandingPage({ onStartGame }) {
   // Remove the unique key to prevent forced remounts
-  const { playReload, playGunshot } = useButtonSounds()
+  const { playReload } = useButtonSounds()
 
   const handleButtonClick = (mode) => {
-    playGunshot()
     onStartGame(mode)
   }
 
