@@ -1,15 +1,123 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, searchRoasts } from './db.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, searchRoasts } from './db.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const SALT_ROUNDS = 10; //bcrypt complexity :p
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 app.use(cors());
 app.use(express.json());
+
+//JWT token generator
+const generateToken = (username) => {
+  return jwt.sign({ username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+};
+
+//JWT token verifier
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  if (username.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+
+  try {
+    const existingUser = getUserByUsername(username);
+    if (existingUser) {
+      return res.status(409).json({ error: 'Username already taken' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    
+    createUser(username, passwordHash);
+    
+    //Generate token to automatically log in after registration
+    const token = generateToken(username);
+    
+    res.status(201).json({ 
+      message: 'User registered successfully',
+      username,
+      token
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  try {
+    const user = getUserByUsername(username);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    //Generate JWT token
+    const token = generateToken(user.username);
+
+    res.json({ 
+      message: 'Login successful',
+      username: user.username,
+      token
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+  res.json({ 
+    valid: true,
+    username: req.user.username 
+  });
+});
 
 app.post('/api/judge-roast', async (req, res) => {
   const { roastText, username } = req.body;

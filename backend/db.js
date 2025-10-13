@@ -15,6 +15,15 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 export const saveRoast = (username, roast, score) => {
   const query = db.prepare('INSERT INTO roasts (username, roast, score) VALUES (?, ?, ?)');
   return query.run(username, roast, score);
@@ -63,5 +72,14 @@ export const searchRoasts = (searchQuery, limit = 50) => {
   return query.all(searchPattern, searchPattern, limit);
 };
 
-export default db;
+export const createUser = (username, passwordHash) => {
+  const query = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
+  return query.run(username, passwordHash);
+};
 
+export const getUserByUsername = (username) => {
+  const query = db.prepare('SELECT * FROM users WHERE username = ?');
+  return query.get(username);
+};
+
+export default db;

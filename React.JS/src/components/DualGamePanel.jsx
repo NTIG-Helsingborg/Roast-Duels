@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Components.css';
 import Leaderboard from './Leaderboard';
 import { useButtonSounds } from './useButtonSounds';
-import DualLoginModal from './DualLoginModal';
+import LoginModal from './LoginModal';
 
 const MAX_CHARACTERS = 200;
 
@@ -245,10 +245,11 @@ function DualGamePanel() {
 
   return (
     <>
-      <DualLoginModal 
+      <LoginModal 
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLogin}
+        isDualMode={true}
       />
       
       <div className="dual-game-layout">
