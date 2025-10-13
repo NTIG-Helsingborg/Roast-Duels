@@ -27,6 +27,26 @@ function Leaderboard() {
     }
   };
 
+  // Function to get gradient colors based on score
+  const getScoreGradient = (score) => {
+    if (score >= 80) {
+      // Green for high scores (80-100)
+      return 'linear-gradient(135deg, #22ff88 0%, #00aa44 100%)';
+    } else if (score >= 60) {
+      // Yellow-green for good scores (60-79)
+      return 'linear-gradient(135deg, #ffff00 0%, #88dd00 100%)';
+    } else if (score >= 40) {
+      // Yellow-orange for decent scores (40-59)
+      return 'linear-gradient(135deg, #ffdd00 0%,rgb(255, 168, 28) 100%)';
+    } else if (score >= 20) {
+      // Orange-red for low scores (20-39)
+      return 'linear-gradient(135deg,rgb(255, 149, 0) 0%,rgb(221, 55, 0) 100%)';
+    } else {
+      // Deep red for very low scores (0-19)
+      return 'linear-gradient(135deg,rgb(255, 37, 37) 0%,rgb(177, 1, 1) 100%)';
+    }
+  };
+
   useEffect(() => {
     fetchLeaderboard(activeTab);
     
@@ -79,7 +99,16 @@ function Leaderboard() {
         ) : (
           roasts.map((roast, index) => (
             <div key={roast.id} className="leaderboard-entry">
-              <div className="score">{roast.score}</div>
+              <div 
+                className="score" 
+                style={{ 
+                  background: getScoreGradient(roast.score),
+                  color: '#fff',
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                {roast.score}
+              </div>
               <div className="roast-content">
                 <p className="author">
                   {activeTab !== 'recent' && index === 0 && '👑 '}
