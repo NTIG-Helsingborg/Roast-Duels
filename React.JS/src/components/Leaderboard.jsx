@@ -29,9 +29,12 @@ function Leaderboard() {
 
   // Function to get gradient colors based on score
   const getScoreGradient = (score) => {
-    if (score >= 80) {
+    if (score >= 90) {
       // Green for high scores (80-100)
       return 'linear-gradient(135deg, #22ff88 0%, #00aa44 100%)';
+    } else if (score >= 80) {
+      // Green for high scores (80-100)
+      return 'linear-gradient(135deg,rgb(137, 255, 34) 0%,rgb(111, 209, 0) 100%)';
     } else if (score >= 60) {
       // Yellow-green for good scores (60-79)
       return 'linear-gradient(135deg, #ffff00 0%, #88dd00 100%)';
