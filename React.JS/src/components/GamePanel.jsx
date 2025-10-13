@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
+import LoginModal from './LoginModal';
 
 const MAX_CHARACTERS = 200; // Twitter-style character limit
 
@@ -29,14 +30,23 @@ async function judgeRoast(roastText, username) {
 }
 
 function GamePanel() {
-  const [playerName, setPlayerName] = useState('Solo Player');
+  const [playerName, setPlayerName] = useState('');
+  const [password, setPassword] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [tempName, setTempName] = useState('Solo Player');
+  const [tempName, setTempName] = useState('');
   const [roastText, setRoastText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(null);
   const [error, setError] = useState(null);
   const { playReload, playGunshot } = useButtonSounds();
+
+  const handleLogin = (username, pass) => {
+    setPlayerName(username);
+    setPassword(pass);
+    setTempName(username);
+    setShowLoginModal(false);
+  };
 
   const handleNameClick = () => {
     if (!isSubmitting) {
@@ -114,8 +124,15 @@ function GamePanel() {
   const isOverLimit = remainingChars < 0;
 
   return (
-    <div className="component-container game-panel">
-      {isEditingName ? (
+    <>
+      <LoginModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLogin={handleLogin}
+      />
+      
+      <div className="component-container game-panel">
+        {isEditingName ? (
         <input
           type="text"
           className="player-title-edit"
@@ -202,7 +219,8 @@ function GamePanel() {
           {error}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
