@@ -129,7 +129,7 @@ function Leaderboard() {
                   {roast.username}
                 </p>
                 <p className="text">{roast.roast}</p>
-                <p className="time-stamp">{formatDateTime(roast.created_at)}</p>
+                <p className="time-stamp">{formatDateTime(roast.date)}</p>
               </div>
             </div>
           ))
