@@ -16,6 +16,22 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 app.use(cors());
 app.use(express.json());
 
+const containsProfanity = (text) => {
+  const profanityList = [
+    'nigger', 'nigga', 'faggot', 'fag', 'retard', 'chink', 
+    'spic', 'kike', 'cunt', 'tranny', 'negger', 'coon', 'neger'
+  ];
+  
+  for (const word of profanityList) {
+    const regex = new RegExp(`${word}`, 'gi');
+    if (regex.test(text)) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
 //JWT token generator
 const generateToken = (username) => {
   return jwt.sign({ username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
@@ -165,6 +181,11 @@ app.post('/api/judge-roast', async (req, res) => {
 
   if (!roastText || !userId) {
     return res.status(400).json({ error: 'Roast text and user ID are required' });
+  }
+
+  // Check for profanity and reject if found
+  if (containsProfanity(roastText)) {
+    return res.status(400).json({ error: 'Your roast contains inappropriate language and cannot be submitted.' });
   }
 
   try {
