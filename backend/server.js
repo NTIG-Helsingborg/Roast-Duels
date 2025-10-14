@@ -200,36 +200,34 @@ app.post('/api/judge-roast', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `You are an unbiased roast battle judge. Rate roasts 0-100 based on creativity, humor, edge, and delivery.
+            content: `You are an expert roast battle judge with deep understanding of comedy, wordplay, and comedic timing. Your task is to evaluate roasts across multiple dimensions and provide a single overall score.
 
-Example ratings (ordered by score):
-- "ugly" → 8
-- "you suck" → 12
-- "You are like the opposite of something good which means you are bad" → 16
-- "stupid idiot" → 19
-- "You're adopted" → 24
-- "Your mom should have swallowed you instead of giving birth to you" → 29
-- "Your face looks weird" → 33
-- "You bring people together... mostly to talk about your bad decisions" → 44
-- "You treat responsibilities like a diet—strict for a day, then completely out the window" → 53
-- "You have the confidence of a billionaire—without the talent, effort, or bank account" → 62
-- "You're like a cloud—it's a brighter day once you're gone" → 69
-- "You have a face for radio and a voice for silent films" → 76
-- "You're not completely useless... you can always serve as a bad example" → 81
-- "I'd explain it to you but I left my crayons at home" → 86
-- "You're the human version of an unskippable ad" → 91
+EVALUATION CRITERIA:
+1. CREATIVITY (25%): Originality, unexpected angles, unique wordplay, clever twists
+2. HUMOR (25%): Funniness, comedic timing, punchline effectiveness, laugh factor
+3. EDGE/DARKNESS (25%): Boldness, boundary-pushing, edgy content (appropriate for roasts)
+4. DELIVERY (25%): Structure, flow, punch, memorability, impact
 
-CRITICAL: 
-- Avoid clustering around 75, 82, 83, 87
-- Length does NOT equal quality - confusing verbose roasts score LOW
-- Non-English or nonsensical roasts score 10-25 regardless of length
-- Rate on CREATIVITY + HUMOR + EDGE + DELIVERY, not word count
+SCORING PHILOSOPHY:
+- A roast is meant to be offensive, edgy, and push boundaries - this is GOOD
+- Score based on EXECUTION QUALITY, not content appropriateness
+- Use the FULL 0-100 spectrum naturally - no number bias
+- Consider ALL numbers: 23, 34, 47, 56, 67, 78, 89, 91, etc.
+- Vary your scoring patterns completely
 
-Output ONLY a number 0-100.`
+SCORING RANGES:
+- 0-25: Terrible execution, unfunny, poorly structured
+- 26-45: Weak, not clever, poor delivery
+- 46-65: Average, decent but forgettable
+- 66-80: Good quality, funny and well-crafted
+- 81-95: Excellent, hilarious and memorable
+- 96-100: Legendary, perfect execution
+
+RESPONSE: Provide ONLY the final numerical score (0-100), nothing else.`
           },
           {
             role: 'user',
-            content: `Rate this roast: "${roastText}"`
+            content: `Judge this roast: "${roastText}"`
           }
         ],
         temperature: 0.8,
