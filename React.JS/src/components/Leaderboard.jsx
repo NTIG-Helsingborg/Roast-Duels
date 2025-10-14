@@ -4,10 +4,12 @@ import './Components.css';
 const API_BASE = 'http://localhost:3001/api';
 
 const getScoreGradient = (score) => {
-  if (score >= 80) {
+  if (score >= 90) {
+    return 'linear-gradient(135deg,rgb(129, 11, 255) 0%,rgb(170, 0, 153) 100%)';
+  } else if (score >= 80) {
     return 'linear-gradient(135deg, #22ff88 0%, #00aa44 100%)';
   } else if (score >= 60) {
-    return 'linear-gradient(135deg, #ffff00 0%, #88dd00 100%)';
+      return 'linear-gradient(135deg, #ffff00 0%, #88dd00 100%)';
   } else if (score >= 40) {
     return 'linear-gradient(135deg, #ffdd00 0%,rgb(255, 168, 28) 100%)';
   } else if (score >= 20) {
