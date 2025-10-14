@@ -12,8 +12,8 @@ body {
     background-repeat: no-repeat;
     background-attachment: fixed; 
     height: 100vh;
-    overflow-y: hidden;
     overflow-x: hidden;
+    scrollbar-width: none;
 }
 
 :root {
@@ -28,7 +28,7 @@ body {
 
 .game-container {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1.25rem;
   padding: 0 1rem;
 }
@@ -44,6 +44,21 @@ body {
 .app-wrapper {
   min-height: 100vh;
   width: 100%;
+}
+
+@media (max-width: 75rem) {
+  .game-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .game-panel {
+    width: 100% !important;
+  }
+  
+  .leaderboard {
+    width: 100% !important;
+  }
 }
 
 @media (max-width: 48rem) {
