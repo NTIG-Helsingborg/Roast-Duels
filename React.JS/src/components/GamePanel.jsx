@@ -112,16 +112,6 @@ function GamePanel() {
     }
   };
 
-  const handleLogout = () => {
-    auth.logout();
-    setPlayerName('');
-    setTempName('');
-    setRoastText('');
-    setScore(null);
-    setError(null);
-    setShowLoginModal(true);
-  };
-
   const handleSubmit = async () => {
     if (!roastText.trim()) {
       setError('Please enter a roast!');
@@ -205,23 +195,6 @@ function GamePanel() {
             >
               {playerName}
             </h2>
-          )}
-          {playerName && !showLoginModal && (
-            <button 
-              onClick={handleLogout}
-              onMouseEnter={playReload}
-              style={{
-                padding: '6px 12px',
-                fontSize: '0.85rem',
-                background: 'rgba(255, 68, 68, 0.2)',
-                border: '1px solid rgba(255, 68, 68, 0.5)',
-                borderRadius: '4px',
-                color: '#ff4444',
-                cursor: 'pointer'
-              }}
-            >
-              Logout
-            </button>
           )}
         </div>
       

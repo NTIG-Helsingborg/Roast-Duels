@@ -33,12 +33,18 @@ body {
   padding: 0 1rem;
 }
 
-.game-header {
+.game-header{
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   margin-bottom: 2rem;
-  padding: 1rem 0;
+  padding: 1rem 1.5rem;
+}
+
+.game-header .back-button {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .app-wrapper {
@@ -70,5 +76,9 @@ body {
   
   .back-button {
     align-self: center;
+  }
+
+  .logout {
+    align-self: flex-end;
   }
 }

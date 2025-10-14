@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './App.css'
 import GamePanel from './components/GamePanel'
 import DualGamePanel from './components/DualGamePanel'
@@ -8,11 +8,31 @@ import MuteButton from './components/MuteButton'
 import MusicPlayer from './components/MusicPlayer'
 import DrawingCanvas from './components/DrawingCanvas'
 import { useButtonSounds } from './components/useButtonSounds'
+import { auth } from './utils/auth'
 
 function App() {
   const [showGame, setShowGame] = useState(false)
   const [gameMode, setGameMode] = useState('single')
+  const [playerName, setPlayerName] = useState('')
   const { playReload, playGunshot } = useButtonSounds()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const data = await auth.verify();
+      if (data) {
+        setPlayerName(data.username);
+      } else {
+        setPlayerName('');
+      }
+    };
+    
+    checkAuth();
+    
+    // Check auth status periodically to catch login changes
+    const interval = setInterval(checkAuth, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStartGame = (mode) => {
     setGameMode(mode)
@@ -22,6 +42,12 @@ function App() {
   const handleBackToLanding = () => {
     playGunshot()
     setShowGame(false)
+  }
+
+  const handleLogout = () => {
+    auth.logout();
+    setPlayerName('');
+    setShowGame(false);
   }
 
   return (
@@ -39,7 +65,18 @@ function App() {
               onClick={handleBackToLanding}>
               ← Back to Home
             </button>
-            <MuteButton />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {playerName && (
+                <button
+                  className="back-button"
+                  onClick={handleLogout}
+                  onMouseEnter={playReload}
+                >
+                  Logout
+                </button>
+              )}
+              <MuteButton />
+            </div>
           </div>
           {gameMode === 'multiplayer' ? (
             <DualGamePanel />
