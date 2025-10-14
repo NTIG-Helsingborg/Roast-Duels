@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
 import LoginModal from './LoginModal';
+import ConfirmUsernameModal from './ConfirmUsernameModal';
 import { auth } from '../utils/auth';
 
 const MAX_CHARACTERS = 200;
@@ -33,8 +34,10 @@ async function judgeRoast(roastText, userId) {
 function GamePanel() {
   const [playerName, setPlayerName] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
+  const [pendingUsername, setPendingUsername] = useState('');
   const [roastText, setRoastText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(null);
@@ -70,7 +73,7 @@ function GamePanel() {
     setTempName(e.target.value);
   };
 
-  const handleNameBlur = async () => {
+  const handleNameBlur = () => {
     setIsEditingName(false);
     const newName = tempName.trim();
     
@@ -79,8 +82,15 @@ function GamePanel() {
       return;
     }
 
+    setPendingUsername(newName);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmUsernameChange = async () => {
+    setShowConfirmModal(false);
+    
     try {
-      const data = await auth.updateUsername(newName);
+      const data = await auth.updateUsername(pendingUsername);
       setPlayerName(data.username);
       setTempName(data.username);
     } catch (err) {
@@ -88,6 +98,12 @@ function GamePanel() {
       setTempName(playerName);
       setTimeout(() => setError(null), 3000);
     }
+  };
+
+  const handleCancelUsernameChange = () => {
+    setShowConfirmModal(false);
+    setTempName(playerName);
+    setPendingUsername('');
   };
 
   const handleNameKeyPress = (e) => {
@@ -157,6 +173,14 @@ function GamePanel() {
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLogin}
+      />
+      
+      <ConfirmUsernameModal
+        isOpen={showConfirmModal}
+        currentUsername={playerName}
+        newUsername={pendingUsername}
+        onConfirm={handleConfirmUsernameChange}
+        onCancel={handleCancelUsernameChange}
       />
       
       <div className="component-container game-panel">
