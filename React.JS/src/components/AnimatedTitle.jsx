@@ -178,8 +178,8 @@ function AnimatedTitle({
         const testCtx = testCanvas.getContext('2d')
         testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
         const metrics = testCtx.measureText(title)
-        const letterSpacingAdjustment = title.length * actualFontSize * (-0.02)
-        const canvasTextWidth = metrics.width + letterSpacingAdjustment
+  const letterSpacingAdjustment = title.length * actualFontSize * (-0.02)
+  const canvasTextWidth = metrics.width + letterSpacingAdjustment
         
         console.log('[AnimatedTitle] Measured title:', {
           domWidth: titleRect.width,
@@ -228,47 +228,54 @@ function AnimatedTitle({
           const canvasContentWidth = canvas.width - (60 * 2)
           tempCanvas.width = canvasContentWidth
           tempCanvas.height = titleRect.height
-            
+
           ctx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
           ctx.letterSpacing = `${actualFontSize * -0.02}px`
           ctx.fillStyle = '#ffffff'
-          ctx.textBaseline = 'top'
-          
-          const metrics = ctx.measureText(title)
-          const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const yPos = (titleRect.height - textHeight) / 2
-          
-          ctx.fillText(title, 0, yPos)
-          const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height)
-          const data = imageData.data
-          const points = []
-          const sampleRate = Math.max(4, Math.floor(actualFontSize / 20))
-          
+          ctx.textBaseline = 'alphabetic';
+
+          // Use metrics.top if available (Safari), otherwise fallback to visually centered position
+          const metrics = ctx.measureText(title);
+          let yPos;
+          const verticalOffset = 28; // Increased offset for better alignment
+          if (typeof metrics.top === 'number') {
+            // Safari supports metrics.top
+            yPos = -metrics.top + (titleRect.height - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 - verticalOffset;
+          } else {
+            // Fallback for Chrome and others
+            yPos = (titleRect.height - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 + metrics.actualBoundingBoxAscent - verticalOffset;
+          }
+
+          ctx.fillText(title, 0, yPos);
+          const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+          const data = imageData.data;
+          const points = [];
+          const sampleRate = Math.max(4, Math.floor(actualFontSize / 20));
+
           for (let y = 0; y < tempCanvas.height; y += sampleRate) {
             for (let x = 0; x < tempCanvas.width; x += sampleRate) {
-              const index = (y * tempCanvas.width + x) * 4
-              const alpha = data[index + 3]
+              const index = (y * tempCanvas.width + x) * 4;
+              const alpha = data[index + 3];
               if (alpha > 100) {
-                const sprayCount = Math.floor(Math.random() * 2) + 2
-                
+                const sprayCount = Math.floor(Math.random() * 2) + 2;
                 for (let i = 0; i < sprayCount; i++) {
-                  const baseSprayRadius = Math.max(1, actualFontSize / 40)
-                  const sprayRadius = Math.random() * baseSprayRadius + baseSprayRadius * 0.5
-                  const angle = Math.random() * Math.PI * 2
+                  const baseSprayRadius = Math.max(1, actualFontSize / 40);
+                  const sprayRadius = Math.random() * baseSprayRadius + baseSprayRadius * 0.5;
+                  const angle = Math.random() * Math.PI * 2;
                   points.push({
                     x: x + Math.cos(angle) * sprayRadius,
                     y: y + Math.sin(angle) * sprayRadius,
                     delay: (x / tempCanvas.width) * 2500 + Math.random() * 300
-                  })
+                  });
                 }
               }
             }
           }
-          tempCanvas.remove()
-          return points
+          tempCanvas.remove();
+          return points;
         } catch (error) {
-          console.warn('[AnimatedTitle] Error processing font path:', error)
-          return createFallbackPoints()
+          console.warn('[AnimatedTitle] Error processing font path:', error);
+          return createFallbackPoints();
         }
       }
 
@@ -282,26 +289,33 @@ function AnimatedTitle({
         const stepSize = Math.max(4, Math.floor(actualFontSize / 20))
         
         for (let x = 0; x < textWidth; x += stepSize) {
-          const testCanvas = document.createElement('canvas')
-          const testCtx = testCanvas.getContext('2d')
-          testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
-          const metrics = testCtx.measureText(title)
-          const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
-          const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * (actualFontSize * 0.1)
-          
-          const sprayCount = Math.floor(Math.random() * 2) + 3
+          // Use metrics.top if available, otherwise fallback
+          const testCanvas = document.createElement('canvas');
+          const testCtx = testCanvas.getContext('2d');
+          testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`;
+          testCtx.textBaseline = 'alphabetic';
+          const metrics = testCtx.measureText(title);
+          let baseY;
+          const verticalOffset = 24; // Increased offset for better alignment
+          if (typeof metrics.top === 'number') {
+            baseY = -metrics.top + (textHeight - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 - verticalOffset;
+          } else {
+            baseY = (textHeight - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 + metrics.actualBoundingBoxAscent - verticalOffset;
+          }
+          const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * (actualFontSize * 0.1);
+
+          const sprayCount = Math.floor(Math.random() * 2) + 3;
           for (let i = 0; i < sprayCount; i++) {
-            const sprayRadius = Math.random() * baseSprayRadius * 2 + baseSprayRadius
-            const angle = Math.random() * Math.PI * 2
+            const sprayRadius = Math.random() * baseSprayRadius * 2 + baseSprayRadius;
+            const angle = Math.random() * Math.PI * 2;
             points.push({
               x: x + Math.cos(angle) * sprayRadius,
               y: waveY + Math.sin(angle) * sprayRadius,
               delay: (x / textWidth) * 2500 + Math.random() * 200
-            })
+            });
           }
         }
-        return points
+        return points;
       }
 
       const createTextTrace = () => {
