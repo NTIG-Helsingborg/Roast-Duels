@@ -104,8 +104,8 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
     : (isSignUp ? 'Create Account & Roast!' : 'Log In!');
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className={`modal-content ${isDualMode ? 'dual-modal' : ''}`} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay">
+      <div className={`modal-content ${isDualMode ? 'dual-modal' : ''}`}>
         <h2 className="modal-title">{modalTitle}</h2>
         
         <form onSubmit={handleSubmit} className="login-form">
@@ -244,14 +244,6 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
             {isSignUp ? 'Already have an account? Log In' : 'Need an account? Sign Up'}
           </button>
         </form>
-
-        <button 
-          className="modal-close-btn"
-          onClick={onClose}
-          onMouseEnter={playReload}
-        >
-          ✕
-        </button>
       </div>
     </div>
   );
