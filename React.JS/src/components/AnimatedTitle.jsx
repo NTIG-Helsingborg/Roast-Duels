@@ -178,8 +178,8 @@ function AnimatedTitle({
         const testCtx = testCanvas.getContext('2d')
         testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
         const metrics = testCtx.measureText(title)
-        const letterSpacingAdjustment = title.length * actualFontSize * (-0.02)
-        const canvasTextWidth = metrics.width + letterSpacingAdjustment
+  const letterSpacingAdjustment = title.length * actualFontSize * (-0.02)
+  const canvasTextWidth = metrics.width + letterSpacingAdjustment
         
         console.log('[AnimatedTitle] Measured title:', {
           domWidth: titleRect.width,
