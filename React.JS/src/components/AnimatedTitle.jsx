@@ -408,7 +408,8 @@ function AnimatedTitle({
           position: 'absolute',
           top: '50%',
           left: '50%',
-          transform: `translate(-50%, calc(-50% + 5.1rem))`,
+          transform: 'translate(-50%, -50%)',
+          marginTop: '5.1rem',
           zIndex: 2,
           pointerEvents: 'none'
         }}
