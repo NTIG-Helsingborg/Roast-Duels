@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import opentype from 'opentype.js'
 import sprayPaintSound from '../assets/spraypaintsound.mp3'
 import { useAudioReactive } from './useAudioReactive'
 import './Components.css'
@@ -10,17 +9,14 @@ function AnimatedTitle({
   className = "",
   soundVolume = 0.3,
   soundPlaybackRate = 1.0,
-  soundEnabled = true,
-  soundStartTime = 1,
-  soundEndTime = 5
+  soundEnabled = true
 }) {
   const canvasRef = useRef(null)
   const titleRef = useRef(null)
-  const measureRef = useRef(null) // NEW: for measuring without scale
+  const measureRef = useRef(null)
   const stageRef = useRef(null)
   const animationRef = useRef(null)
   const [textTraced, setTextTraced] = useState(false)
-  const [font, setFont] = useState(null)
   const animationStarted = useRef(false)
   const [shouldPlaySound, setShouldPlaySound] = useState(false)
   const [userHasInteracted, setUserHasInteracted] = useState(false)
@@ -28,31 +24,42 @@ function AnimatedTitle({
   const soundTimeoutRef = useRef(null)
   const audioRef = useRef(null)
   const [audioKey] = useState(() => Date.now() + Math.random())
+  const initialSizeRef = useRef(null)
+  const [responsiveScale, setResponsiveScale] = useState(1)
   
-  // Initialize audio delay based on whether we've animated before
   const [shouldDelayAudio, setShouldDelayAudio] = useState(() => {
     try {
-      // If we've animated before, no delay needed
       return sessionStorage.getItem('titleAnimated') !== 'true'
     } catch {
-      return true // Default to delay on first visit
+      return true
     }
   })
   
-  // Keep audio-reactive hook always active, but with delay only on first animation
   const audioData = useAudioReactive(true, shouldDelayAudio ? 1000 : 0)
   
-  // Debug: Log when audioData changes
   useEffect(() => {
     if (audioData.scale !== 1) {
       console.log('[AnimatedTitle] 🎵 Audio pulse:', audioData.scale.toFixed(3))
     }
   }, [audioData.scale])
   
-  // Debug: Log delay changes
   useEffect(() => {
     console.log('[AnimatedTitle] Audio delay setting:', shouldDelayAudio ? '1000ms (waiting for animation)' : '0ms (instant sync)')
   }, [shouldDelayAudio])
+  
+  useEffect(() => {
+    const updateResponsiveScale = () => {
+      const scale = window.innerWidth / 1200
+      setResponsiveScale(scale)
+    }
+    
+    updateResponsiveScale()
+    window.addEventListener('resize', updateResponsiveScale)
+    
+    return () => {
+      window.removeEventListener('resize', updateResponsiveScale)
+    }
+  }, [])
   
   const traceColors = ["#00d9ff", "#0dc6e7", "#26c9e8", "#1fb5d1"]
 
@@ -86,31 +93,17 @@ function AnimatedTitle({
   }, [])
 
   useEffect(() => {
-    // Check if we've animated before in this session
     const hasAnimated = sessionStorage.getItem('titleAnimated') === 'true'
     
     if (hasAnimated) {
       console.log('[AnimatedTitle] ⚡ Returning - run animation but with instant audio sync')
-      setShouldDelayAudio(false) // No audio delay on return visits
+      setShouldDelayAudio(false)
     } else {
       console.log('[AnimatedTitle] 🎨 First visit - starting animation with delayed audio')
     }
     
-    // Always reset these for the animation to run
     setTextTraced(false)
     animationStarted.current = false
-    
-    const loadFont = async () => {
-      try {
-        const fontPath = '/src/assets/fonts/snakehead-graffiti.regular.otf'
-        const loadedFont = await opentype.load(fontPath)
-        setFont(loadedFont)
-        console.log('[AnimatedTitle] Font loaded:', loadedFont)
-      } catch (error) {
-        console.warn('[AnimatedTitle] Could not load custom font, using fallback:', error)
-      }
-    }
-    loadFont()
   }, [])
 
   useEffect(() => {
@@ -130,7 +123,7 @@ function AnimatedTitle({
     audio.volume = soundVolume;
     audio.playbackRate = soundPlaybackRate;
     audio.loop = false;
-    if (shouldPlaySound && userHasInteracted) {
+    if (shouldPlaySound && soundEnabled && userHasInteracted) {
       audio.currentTime = 12;
       audio.play()
         .then(() => {
@@ -147,7 +140,7 @@ function AnimatedTitle({
         audio.pause();
       }
     };
-  }, [shouldPlaySound, userHasInteracted, soundVolume, soundPlaybackRate]);
+  }, [shouldPlaySound, soundEnabled, userHasInteracted, soundVolume, soundPlaybackRate]);
 
   useEffect(() => {
     let didRun = false
@@ -170,20 +163,53 @@ function AnimatedTitle({
         window.createjs.Ticker.addEventListener("tick", stage)
       }
 
-      let actualFontSize = window.innerWidth * 0.15
-
-      const canvas = canvasRef.current
-      const titleElement = measureRef.current // CHANGED: use measureRef
-      const titleRect = titleElement.getBoundingClientRect()
+      let actualFontSize = 176
       
-      const extraSpace = 60
-      canvas.width = titleRect.width + (extraSpace * 2)
-      canvas.height = titleRect.height + (extraSpace * 2)
+      const canvas = canvasRef.current
+      const titleElement = measureRef.current
+      let titleRect = null
+      
+      requestAnimationFrame(() => {
+        if (!titleElement || !canvas) return
+        
+        titleRect = titleElement.getBoundingClientRect()
+        
+        const testCanvas = document.createElement('canvas')
+        const testCtx = testCanvas.getContext('2d')
+        testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
+        const metrics = testCtx.measureText(title)
+        const letterSpacingAdjustment = title.length * actualFontSize * (-0.02)
+        const canvasTextWidth = metrics.width + letterSpacingAdjustment
+        
+        console.log('[AnimatedTitle] Measured title:', {
+          domWidth: titleRect.width,
+          height: titleRect.height,
+          text: title,
+          scrollWidth: titleElement.scrollWidth,
+          offsetWidth: titleElement.offsetWidth,
+          canvasTextWidth: canvasTextWidth,
+          metricsWidth: metrics.width
+        })
+        
+        const extraSpace = 60
+        const actualWidth = canvasTextWidth
+        canvas.width = actualWidth + (extraSpace * 2)
+        canvas.height = titleRect.height + (extraSpace * 2)
 
-      if (stage) {
-        stage.x = extraSpace
-        stage.y = extraSpace
-      }
+        if (stage) {
+          stage.x = extraSpace
+          stage.y = extraSpace
+        }
+        
+        initialSizeRef.current = {
+          width: actualWidth,
+          height: titleRect.height
+        }
+        
+        setTimeout(() => {
+          createTextTrace()
+        }, 500)
+      })
 
       const createParticle = (x, y, rad, alpha, color) => {
         if (!stage) return
@@ -196,64 +222,37 @@ function AnimatedTitle({
       }
 
       const getTextPathPoints = () => {
-        if (!font) {
-          return createFallbackPoints()
-        }
         try {
-          const testCanvas = document.createElement('canvas')
-          const testCtx = testCanvas.getContext('2d')
-          testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
-          const fontSize = actualFontSize
-          const metrics = testCtx.measureText(title)
-          const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const widthRatio = window.innerWidth / 1200
-          const adjustment = metrics.actualBoundingBoxAscent * (widthRatio - 1) * 0.1
-          const baselineOffset = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent + adjustment
-          const path = font.getPath(title, 0, baselineOffset, fontSize)
           const tempCanvas = document.createElement('canvas')
           const ctx = tempCanvas.getContext('2d')
-          tempCanvas.width = titleRect.width
+          const canvasContentWidth = canvas.width - (60 * 2)
+          tempCanvas.width = canvasContentWidth
           tempCanvas.height = titleRect.height
+            
+          ctx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
+          ctx.letterSpacing = `${actualFontSize * -0.02}px`
           ctx.fillStyle = '#ffffff'
-          ctx.beginPath()
-          path.commands.forEach((cmd) => {
-            switch (cmd.type) {
-              case 'M': ctx.moveTo(cmd.x, cmd.y); break
-              case 'L': ctx.lineTo(cmd.x, cmd.y); break
-              case 'C': ctx.bezierCurveTo(cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.x, cmd.y); break
-              case 'Q': ctx.quadraticCurveTo(cmd.x1, cmd.y1, cmd.x, cmd.y); break
-              case 'Z': ctx.closePath(); break
-            }
-          })
-          ctx.fill()
+          ctx.textBaseline = 'top'
+          
+          const metrics = ctx.measureText(title)
+          const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+          const yPos = (titleRect.height - textHeight) / 2
+          
+          ctx.fillText(title, 0, yPos)
           const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height)
           const data = imageData.data
           const points = []
-          let sampleRate
-          if (fontSize <= 60) {
-            sampleRate = 6
-          } else if (fontSize <= 120) {
-            sampleRate = 10
-          } else {
-            sampleRate = 16
-          }
+          const sampleRate = Math.max(4, Math.floor(actualFontSize / 20))
           
           for (let y = 0; y < tempCanvas.height; y += sampleRate) {
             for (let x = 0; x < tempCanvas.width; x += sampleRate) {
               const index = (y * tempCanvas.width + x) * 4
               const alpha = data[index + 3]
               if (alpha > 100) {
-                let sprayCount
-                if (fontSize <= 60) {
-                  sprayCount = Math.floor(Math.random() * 3) + 2
-                } else if (fontSize <= 120) {
-                  sprayCount = Math.floor(Math.random() * 2) + 2
-                } else {
-                  sprayCount = Math.floor(Math.random() * 2) + 1
-                }
+                const sprayCount = Math.floor(Math.random() * 2) + 2
                 
                 for (let i = 0; i < sprayCount; i++) {
-                  const baseSprayRadius = Math.max(1, fontSize / 40)
+                  const baseSprayRadius = Math.max(1, actualFontSize / 40)
                   const sprayRadius = Math.random() * baseSprayRadius + baseSprayRadius * 0.5
                   const angle = Math.random() * Math.PI * 2
                   points.push({
@@ -275,18 +274,12 @@ function AnimatedTitle({
 
       const createFallbackPoints = () => {
         const points = []
-        const textWidth = titleRect.width
+        const canvasContentWidth = canvas.width - (60 * 2)
+        const textWidth = canvasContentWidth
         const textHeight = titleRect.height
         const baseSprayRadius = Math.max(1, actualFontSize / 40)
         
-        let stepSize
-        if (actualFontSize <= 60) {
-          stepSize = 4
-        } else if (actualFontSize <= 120) {
-          stepSize = 8
-        } else {
-          stepSize = 15
-        }
+        const stepSize = Math.max(4, Math.floor(actualFontSize / 20))
         
         for (let x = 0; x < textWidth; x += stepSize) {
           const testCanvas = document.createElement('canvas')
@@ -294,19 +287,10 @@ function AnimatedTitle({
           testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
           const metrics = testCtx.measureText(title)
           const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-          const widthRatio = window.innerWidth / 1200
-          const adjustment = metrics.actualBoundingBoxAscent * (widthRatio - 1) * 0.1
-          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent + adjustment
+          const baseY = (titleRect.height - textHeight) / 2 + metrics.actualBoundingBoxAscent
           const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * (actualFontSize * 0.1)
           
-          let sprayCount
-          if (actualFontSize <= 60) {
-            sprayCount = Math.floor(Math.random() * 3) + 3
-          } else if (actualFontSize <= 120) {
-            sprayCount = Math.floor(Math.random() * 2) + 3
-          } else {
-            sprayCount = Math.floor(Math.random() * 2) + 2
-          }
+          const sprayCount = Math.floor(Math.random() * 2) + 3
           for (let i = 0; i < sprayCount; i++) {
             const sprayRadius = Math.random() * baseSprayRadius * 2 + baseSprayRadius
             const angle = Math.random() * Math.PI * 2
@@ -349,16 +333,13 @@ function AnimatedTitle({
           setTextTraced(true)
           setShouldDelayAudio(false)
           console.log('[AnimatedTitle] 🎵 Animation complete, audio sync active')
+          
           try {
             sessionStorage.setItem('titleAnimated', 'true')
           } catch (e) {}
         }, maxDelay + 1000)
       }
-
-      setTimeout(() => {
-        createTextTrace()
-      }, 500)
-
+      
       return () => {
         if (animationRef.current) clearTimeout(animationRef.current)
         if (soundTimeoutRef.current) clearTimeout(soundTimeoutRef.current)
@@ -371,26 +352,16 @@ function AnimatedTitle({
       }
     }
 
-    if (font) {
-      startAnimation()
-    } else {
-      let fontCheckCount = 0
-      const fontCheck = setInterval(() => {
-        fontCheckCount++
-        if (font || fontCheckCount > 30) {
-          clearInterval(fontCheck)
-          startAnimation()
-        }
-      }, 50)
-      return () => clearInterval(fontCheck)
-    }
-  }, [font])
+    startAnimation()
+  }, [])
 
   return (
     <div className={`animated-title-container ${className}`} style={{ 
       position: 'relative', 
       display: 'inline-block',
-      overflow: 'visible'
+      overflow: 'visible',
+      transform: `scale(${responsiveScale})`,
+      transformOrigin: 'center center'
     }}>
       <motion.div
         initial={{ scale: 2 }}
@@ -399,7 +370,7 @@ function AnimatedTitle({
             ? {
                 scale: [2, 1.02, 1],
                 transition: {
-                  duration: 1.5,
+                  duration: 1.8,
                   times: [0, 0.75, 1],
                   ease: [0.16, 1, 0.3, 1]
                 }
@@ -437,29 +408,30 @@ function AnimatedTitle({
           position: 'absolute',
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
+          transform: `translate(-50%, calc(-50% + 5.1rem))`,
           zIndex: 2,
           pointerEvents: 'none'
         }}
       />
       
-      {!textTraced && (
-        <h1 
-          ref={measureRef}
-          className="game-title" 
-          style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            opacity: 0,
-            pointerEvents: 'none',
-            zIndex: 1
-          }}
-          aria-hidden="true"
-        >
-          {title}
-        </h1>
-      )}
+      <h1 
+        ref={measureRef}
+        className="game-title" 
+        style={{ 
+          position: 'absolute',
+          top: '-9999px',
+          left: '-9999px',
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -1,
+          visibility: textTraced ? 'hidden' : 'visible',
+          whiteSpace: 'nowrap',
+          width: 'max-content'
+        }}
+        aria-hidden="true"
+      >
+        {title}
+      </h1>
       
       <audio
         key={audioKey}
