@@ -237,12 +237,13 @@ function AnimatedTitle({
           // Use metrics.top if available (Safari), otherwise fallback to visually centered position
           const metrics = ctx.measureText(title);
           let yPos;
+          const verticalOffset = 28; // Increased offset for better alignment
           if (typeof metrics.top === 'number') {
             // Safari supports metrics.top
-            yPos = -metrics.top + (titleRect.height - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2;
+            yPos = -metrics.top + (titleRect.height - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 - verticalOffset;
           } else {
             // Fallback for Chrome and others
-            yPos = (titleRect.height - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 + metrics.actualBoundingBoxAscent;
+            yPos = (titleRect.height - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 + metrics.actualBoundingBoxAscent - verticalOffset;
           }
 
           ctx.fillText(title, 0, yPos);
@@ -295,10 +296,11 @@ function AnimatedTitle({
           testCtx.textBaseline = 'alphabetic';
           const metrics = testCtx.measureText(title);
           let baseY;
+          const verticalOffset = 24; // Increased offset for better alignment
           if (typeof metrics.top === 'number') {
-            baseY = -metrics.top + (textHeight - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2;
+            baseY = -metrics.top + (textHeight - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 - verticalOffset;
           } else {
-            baseY = (textHeight - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 + metrics.actualBoundingBoxAscent;
+            baseY = (textHeight - (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)) / 2 + metrics.actualBoundingBoxAscent - verticalOffset;
           }
           const waveY = baseY + Math.sin(x / textWidth * Math.PI * 6) * (actualFontSize * 0.1);
 
@@ -420,8 +422,7 @@ function AnimatedTitle({
           position: 'absolute',
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
-          marginTop: '5.1rem',
+          transform: `translate(-50%, calc(-50% + 5.1rem))`,
           zIndex: 2,
           pointerEvents: 'none'
         }}
