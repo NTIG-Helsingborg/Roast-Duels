@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './Components.css';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'https://roastbattles.azurewebsites.net/api';
 
 const getScoreGradient = (score) => {
   if (score >= 90) {

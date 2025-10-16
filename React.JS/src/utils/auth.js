@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001';
+const API_URL = 'https://roastbattles.azurewebsites.net';
 
 export const auth = {
   async register(username, password) {
