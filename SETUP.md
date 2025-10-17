@@ -1,4 +1,4 @@
-# 🚀 Setup Instructions
+# Setup Instructions
 
 Complete guide to get Roast Battles running on your machine.
 
@@ -31,6 +31,8 @@ npm install
 Create `backend/.env` file and add your key:
 ```
 GROQ_API_KEY=gsk_your_actual_key_here
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRES_IN=7d
 ```
 
 Start the backend server:
@@ -53,24 +55,31 @@ npm run dev
 ### Step 4: Test It!
 
 1. Open **http://localhost:5173** in your browser
-2. Click **"Solo"** or **"Duel"**
-3. Type a roast
-4. Hit **Submit Roast**
-5. Get your AI score (0-100) in 1-2 seconds! 🎉
+2. Choose **"Solo"** or **"Duel"** mode
+3. Create an account or login
+4. Type a roast (max 200 characters)
+5. Hit **Submit Roast** or **Ready to Battle**
+6. Get your AI score (0-100) in 1-2 seconds! 🎉
 
 ---
 
 ## Architecture
 
 ```
-Frontend (React)  →  Backend (Express)  →  Groq API (Llama 3.3)
-     :5173              :3001               (API key hidden)
+Frontend (React + Vite)  →  Backend (Express)  →  SQLite Database
+     :5173                    :3001                    (local file)
+                           ↓
+                       Groq API (Llama 3.3)
+                           (API key hidden)
 ```
 
-**Why a backend?**
-- ✅ Hides API key from browser (security)
-- ✅ Safe for production deployment
-- ✅ Prevents key theft from DevTools
+**Key Features:**
+- ✅ User authentication with JWT tokens
+- ✅ SQLite database for persistent storage
+- ✅ Solo and Dual game modes
+- ✅ Real-time leaderboards with multiple views
+- ✅ Roast search functionality
+- ✅ Hides API key from browser/users
 
 ---
 
@@ -78,45 +87,62 @@ Frontend (React)  →  Backend (Express)  →  Groq API (Llama 3.3)
 
 ```
 Roast-Duels/
-├── backend/              # Express API server
-│   ├── server.js         # Main server (68 lines)
-│   ├── .env              # Your Groq API key (gitignored)
+├── backend/                    # Express API server
+│   ├── server.js              # Main server (319 lines)
+│   ├── db.js                  # SQLite database operations
+│   ├── roasts.db              # SQLite database file (auto-created)
+│   ├── .env                   # Environment variables (gitignored)
 │   └── package.json
-├── React.JS/             # React frontend
-│   └── src/
-│       └── components/
-│           ├── GamePanel.jsx    # Roast submission + scoring
-│           └── Leaderboard.jsx  # Top 10 roasts
+├── React.JS/                  # React frontend (Vite)
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── GamePanel.jsx      # Solo roast submission + scoring
+│   │   │   ├── DualGamePanel.jsx  # Head-to-head battle mode
+│   │   │   ├── Leaderboard.jsx    # Multi-view leaderboards
+│   │   │   ├── LoginModal.jsx     # User authentication
+│   │   │   ├── LandingPage.jsx    # Game mode selection
+│   │   │   ├── DrawingCanvas.jsx  # Animated graffiti background
+│   │   │   ├── MusicPlayer.jsx    # Background music system
+│   │   │   └── useButtonSounds.js # Audio effects
+│   │   ├── utils/
+│   │   │   └── auth.js            # Authentication utilities
+│   │   └── App.jsx               # Main app component
+│   └── package.json
 └── README.md
 ```
 
 ---
 
-## 🌐 Production Deployment (Azure)
+## Production Deployment (Azure)
 
 ### Backend Deployment
 
 1. **Deploy to Azure App Service:**
    - Upload `backend/` folder
-   - Set environment variable in Azure portal:
-     - **Name:** `GROQ_API_KEY`
-     - **Value:** Your Groq API key
+   - Set environment variables in Azure portal:
+     - **Name:** `GROQ_API_KEY` **Value:** Your Groq API key
+     - **Name:** `JWT_SECRET` **Value:** Your JWT secret key
+     - **Name:** `JWT_EXPIRES_IN` **Value:** `7d`
+   - Note: SQLite database will be created automatically on first run
 
 2. **Note your backend URL:**
    - Example: `https://roast-duels-backend.azurewebsites.net`
 
 ### Frontend Deployment
 
-1. **Update API endpoint in code:**
+1. **Update API endpoints in code:**
    
-   Open `React.JS/src/components/GamePanel.jsx` (line 8)
-   
-   Change from:
+   Update `React.JS/src/utils/auth.js` (line 1):
    ```javascript
-   const response = await fetch('http://localhost:3001/api/judge-roast', {
+   const API_URL = 'https://roast-duels-backend.azurewebsites.net';
    ```
    
-   To your Azure backend URL:
+   Update `React.JS/src/components/GamePanel.jsx` (line 12):
+   ```javascript
+   const response = await fetch('https://roast-duels-backend.azurewebsites.net/api/judge-roast', {
+   ```
+   
+   Update `React.JS/src/components/DualGamePanel.jsx` (line 12):
    ```javascript
    const response = await fetch('https://roast-duels-backend.azurewebsites.net/api/judge-roast', {
    ```
@@ -131,23 +157,32 @@ Roast-Duels/
 
 ---
 
-## 🔐 Security
+## Security
 
 - ✅ API key stored in backend `.env` file (gitignored)
-- ✅ Never exposed to browser/client
+- ✅ JWT tokens for secure authentication
+- ✅ Password hashing with bcrypt
 - ✅ Azure uses environment variables (no files)
 - ✅ Safe for public deployment
 
 ---
 
-## 🤖 API Details
+## API Details
 
-### Endpoint: POST `/api/judge-roast`
+### Authentication Endpoints
 
-**Request:**
+**POST `/api/auth/register`** - Create new account
+**POST `/api/auth/login`** - User login
+**GET `/api/auth/verify`** - Verify JWT token
+**PUT `/api/auth/update-username`** - Update username
+
+### Game Endpoints
+
+**POST `/api/judge-roast`** - Judge a roast submission
 ```json
 {
-  "roastText": "Your code is so bad, even bugs refuse to run it."
+  "roastText": "Your code is so bad, even bugs refuse to run it.",
+  "userId": 123
 }
 ```
 
@@ -158,10 +193,17 @@ Roast-Duels/
 }
 ```
 
-**Rate Limits (Free Tier):**
+### Leaderboard Endpoints
+
+**GET `/api/leaderboard/all-time`** - Top roasts of all time
+**GET `/api/leaderboard/past-7-days`** - Top roasts from past week
+**GET `/api/leaderboard/recent`** - Most recent submissions
+**GET `/api/leaderboard/search?q=searchterm`** - Search roasts
+
+**Groq API rate limits (Free Tier):**
 - 14,400 requests per day
 - 30 requests per minute
-- More than enough for development!
+- More than enough for a small project!
 
 ---
 
@@ -169,13 +211,22 @@ Roast-Duels/
 
 ### Backend won't start?
 - Make sure you ran `npm install` in `backend/` folder
-- Check that `backend/.env` has your Groq API key
+- Check that `backend/.env` has all required variables:
+  - `GROQ_API_KEY=gsk_your_actual_key_here`
+  - `JWT_SECRET=your_jwt_secret_here`
+  - `JWT_EXPIRES_IN=7d`
 - Key should start with `gsk_`
 
 ### Frontend shows "Backend server not running"?
 - Backend must be running on port 3001
 - Check backend terminal for errors
 - Make sure both servers run simultaneously
+
+### Authentication issues?
+- Clear browser localStorage: `localStorage.clear()`
+- Make sure JWT_SECRET is set in backend `.env`
+- Check that passwords are at least 6 characters
+- Usernames must be 3-15 characters, no spaces
 
 ### PowerShell script execution errors?
 Run this once:
@@ -190,16 +241,32 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ---
 
-## Team Development
 
-Each team member should:
-1. Get their own FREE Groq API key
-2. Create their own `backend/.env` file locally
-3. Never commit `.env` to git (already in `.gitignore`)
+## Game Features
 
-This gives each person 14,400 requests/day and keeps keys secure!
+### Solo Mode
+- Submit individual roasts for AI judging
+- View your score and performance feedback
+- Compete on global leaderboards
+
+### Dual Mode  
+- Head-to-head roast battles
+- Both players ready up simultaneously
+- Scores revealed together for comparison
+
+### Leaderboards
+- **All-Time**: Best roasts ever submitted
+- **Past 7 Days**: Recent top performers  
+- **Recent**: Latest submissions
+- **Search**: Find specific roasts or users
+
+### User Features
+- Account creation and login
+- Editable usernames (click to change)
+- Persistent roast history
+- JWT-based session management
 
 ---
 
-**Have fun roasting! 🔥**
+**Have fun roasting!**
 

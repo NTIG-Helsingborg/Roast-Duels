@@ -279,21 +279,6 @@ function DualGamePanel({ onBackToLanding }) {
       
       <div className="dual-game-layout">
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-          <button 
-            onClick={handleLogout}
-            onMouseEnter={playReload}
-            style={{
-              padding: '6px 12px',
-              fontSize: '0.85rem',
-              background: 'rgba(255, 68, 68, 0.2)',
-              border: '1px solid rgba(255, 68, 68, 0.5)',
-              borderRadius: '4px',
-              color: '#ff4444',
-              cursor: 'pointer'
-            }}
-          >
-            Logout
-          </button>
         </div>
         <div className="dual-game-container">
           <PlayerPanel 
