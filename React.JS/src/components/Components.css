@@ -35,9 +35,24 @@
   margin-left: 1.5rem;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   text-wrap: nowrap;
+  z-index: 1000;
 }
 
 .back-button:hover {
+  background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
+  transform: translate(-0.125rem, -0.125rem);
+  box-shadow: 0.5rem 0.5rem 0 var(--spray-black);
+}
+
+.modal-back-button {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  margin-left: 0;
+  
+  z-index: 1001;
+}
+.modal-back-button:hover {
   background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
   transform: translate(-0.125rem, -0.125rem);
   box-shadow: 0.5rem 0.5rem 0 var(--spray-black);

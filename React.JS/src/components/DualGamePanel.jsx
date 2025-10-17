@@ -155,7 +155,7 @@ function PlayerPanel({
   );
 }
 
-function DualGamePanel() {
+function DualGamePanel({ onBackToLanding }) {
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
@@ -274,6 +274,7 @@ function DualGamePanel() {
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLogin}
         isDualMode={true}
+        onBackToLanding={onBackToLanding}
       />
       
       <div className="dual-game-layout">
