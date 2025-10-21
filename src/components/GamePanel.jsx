@@ -9,7 +9,7 @@ const MAX_CHARACTERS = 200;
 
 async function judgeRoast(roastText, userId) {
   try {
-    const response = await fetch('https://roastbattles.azurewebsites.net/api/judge-roast', {
+    const response = await fetch('https://roastbattles-backend.azurewebsites.net/api/judge-roast', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

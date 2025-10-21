@@ -1,4 +1,4 @@
-const API_URL = 'https://roastbattles.azurewebsites.net';
+const API_URL = 'https://roastbattles-backend.azurewebsites.nett';
 
 export const auth = {
   async register(username, password) {

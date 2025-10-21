@@ -1,52 +1,49 @@
-# Dependencies
-**/node_modules/
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Production builds
-**/dist/
-**/build/
+node_modules
+dist
+dist-ssr
+*.local
 
-# Database files (don't commit actual database data)
-**/*.db
-**/*.sqlite
-**/*.sqlite3
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
 # Environment variables
-**/.env
-**/.env.local
-**/.env.*.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Logs
-logs/
-**/*.log
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Coverage directory used by tools like istanbul
+coverage
 
-# IDE/Editor files
+# Cache
+.cache
+.parcel-cache
+
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea/
-*.swp
-*.swo
-*~
-
-# Temporary files
-.tmp/
-temp/
-
-# Coverage reports
-coverage/
-
-# Cache directories
-.cache/
-.parcel-cache/
-.eslintcache
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
