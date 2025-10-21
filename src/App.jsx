@@ -28,8 +28,8 @@ function App() {
     
     checkAuth();
     
-    // Check auth status periodically to catch login changes
-    const interval = setInterval(checkAuth, 1000);
+    // Check auth status periodically to catch login changes (every 30 seconds)
+    const interval = setInterval(checkAuth, 30000);
     
     return () => clearInterval(interval);
   }, []);
