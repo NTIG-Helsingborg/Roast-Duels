@@ -35,7 +35,7 @@ export const getTopAllTime = (limit = 50) => {
     SELECT r.id, u.username, r.roast, r.score, r.date 
     FROM roasts r
     JOIN users u ON r.user_id = u.id
-    ORDER BY r.score DESC, r.date DESC 
+    ORDER BY r.score DESC, r.date ASC 
     LIMIT ?
   `);
   return query.all(limit);
@@ -47,7 +47,7 @@ export const getTopPast7Days = (limit = 50) => {
     FROM roasts r
     JOIN users u ON r.user_id = u.id
     WHERE r.date >= datetime('now', '-7 days')
-    ORDER BY r.score DESC, r.date DESC 
+    ORDER BY r.score DESC, r.date ASC 
     LIMIT ?
   `);
   return query.all(limit);
