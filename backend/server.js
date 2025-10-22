@@ -18,9 +18,11 @@ app.use(cors());
 app.use(express.json());
 
 const containsProfanity = (text) => {
+  const OnlyLettersAndNumbers = text.replace(/[^a-zA-Z0-9]/g, '');
+  
   for (const word of profanityList) {
     const regex = new RegExp(`${word}`, 'gi');
-    if (regex.test(text)) {
+    if (regex.test(OnlyLettersAndNumbers)) {
       return true;
     }
   }
