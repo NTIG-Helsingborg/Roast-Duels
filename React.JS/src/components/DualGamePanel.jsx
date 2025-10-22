@@ -3,7 +3,9 @@ import './Components.css';
 import Leaderboard from './Leaderboard';
 import { useButtonSounds } from './useButtonSounds';
 import LoginModal from './LoginModal';
+import TutorialModal from './TutorialModal';
 import { auth } from '../utils/auth';
+import { tutorialUtils } from '../utils/tutorial';
 
 const MAX_CHARACTERS = 200;
 
@@ -138,8 +140,11 @@ function PlayerPanel({
             {score}
           </div>
           <div className="score-emoji">
-            {score >= 90 ? '🔥 Legendary!' : 
-             score >= 75 ? '😎 Solid roast!' :
+            {score >= 90 ? (
+              <>
+                <span className="custom-fire">🔥</span> Legendary!
+              </>
+            ) : score >= 75 ? '😎 Solid roast!' :
              score >= 50 ? '👍 Not bad!' :
              score >= 25 ? '😬 Keep practicing...' :
              '💀 Oof...'}
@@ -160,6 +165,7 @@ function DualGamePanel({ onBackToLanding }) {
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [player1Roast, setPlayer1Roast] = useState('');
   const [player2Roast, setPlayer2Roast] = useState('');
   const [player1Ready, setPlayer1Ready] = useState(false);
@@ -179,9 +185,29 @@ function DualGamePanel({ onBackToLanding }) {
         setPlayer1Name(data.username);
         setPlayer2Name(data.username + ' 2');
         setShowLoginModal(false);
+        
+        console.log('Checking tutorial for user:', data.username);
+        if (tutorialUtils.isFirstTimeUser()) {
+          console.log('Showing tutorial for first-time user');
+          setShowTutorial(true);
+          tutorialUtils.markVisited();
+        } else {
+          console.log('User has already seen tutorial, skipping');
+        }
       }
     };
     checkAuth();
+
+    const handleReplayTutorial = () => {
+      console.log('Replaying tutorial');
+      setShowTutorial(true);
+    };
+
+    window.addEventListener('replayTutorial', handleReplayTutorial);
+    
+    return () => {
+      window.removeEventListener('replayTutorial', handleReplayTutorial);
+    };
   }, []);
 
   useEffect(() => {
@@ -205,6 +231,11 @@ function DualGamePanel({ onBackToLanding }) {
     setPlayer1Name(p1Name);
     setPlayer2Name(p2Name);
     setShowLoginModal(false);
+    
+    if (tutorialUtils.isFirstTimeUser()) {
+      setShowTutorial(true);
+      tutorialUtils.markVisited();
+    }
   };
 
   const handleLogout = () => {
@@ -297,6 +328,10 @@ function DualGamePanel({ onBackToLanding }) {
     }
   };
 
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+  };
+
   return (
     <>
       <LoginModal 
@@ -305,6 +340,12 @@ function DualGamePanel({ onBackToLanding }) {
         onLogin={handleLogin}
         isDualMode={true}
         onBackToLanding={onBackToLanding}
+      />
+
+      <TutorialModal
+        isOpen={showTutorial}
+        onClose={handleTutorialClose}
+        gameMode="multiplayer"
       />
       
       <div className="dual-game-layout">

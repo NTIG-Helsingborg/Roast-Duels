@@ -3,7 +3,9 @@ import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
 import LoginModal from './LoginModal';
 import ConfirmUsernameModal from './ConfirmUsernameModal';
+import TutorialModal from './TutorialModal';
 import { auth } from '../utils/auth';
+import { tutorialUtils } from '../utils/tutorial';
 
 const MAX_CHARACTERS = 200;
 
@@ -35,6 +37,7 @@ function GamePanel({ onBackToLanding }) {
   const [playerName, setPlayerName] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [pendingUsername, setPendingUsername] = useState('');
@@ -53,9 +56,29 @@ function GamePanel({ onBackToLanding }) {
         setPlayerName(data.username);
         setTempName(data.username);
         setShowLoginModal(false);
+        
+        console.log('Checking tutorial for user:', data.username);
+        if (tutorialUtils.isFirstTimeUser()) {
+          console.log('Showing tutorial for first-time user');
+          setShowTutorial(true);
+          tutorialUtils.markVisited();
+        } else {
+          console.log('User has already seen tutorial, skipping');
+        }
       }
     };
     checkAuth();
+
+    const handleReplayTutorial = () => {
+      console.log('Replaying tutorial');
+      setShowTutorial(true);
+    };
+
+    window.addEventListener('replayTutorial', handleReplayTutorial);
+    
+    return () => {
+      window.removeEventListener('replayTutorial', handleReplayTutorial);
+    };
   }, []);
 
   useEffect(() => {
@@ -79,6 +102,11 @@ function GamePanel({ onBackToLanding }) {
     setPlayerName(username);
     setTempName(username);
     setShowLoginModal(false);
+    
+    if (tutorialUtils.isFirstTimeUser()) {
+      setShowTutorial(true);
+      tutorialUtils.markVisited();
+    }
   };
 
   const handleNameClick = () => {
@@ -182,6 +210,10 @@ function GamePanel({ onBackToLanding }) {
     }
   };
 
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+  };
+
   const remainingChars = MAX_CHARACTERS - roastText.length;
   const isOverLimit = remainingChars < 0;
 
@@ -200,6 +232,12 @@ function GamePanel({ onBackToLanding }) {
         newUsername={pendingUsername}
         onConfirm={handleConfirmUsernameChange}
         onCancel={handleCancelUsernameChange}
+      />
+
+      <TutorialModal
+        isOpen={showTutorial}
+        onClose={handleTutorialClose}
+        gameMode="single"
       />
       
       <div className="component-container game-panel">
@@ -270,8 +308,11 @@ function GamePanel({ onBackToLanding }) {
             {score}
           </div>
           <div style={{ fontSize: '1rem', opacity: 0.8 }}>
-            {score >= 90 ? '🔥 Legendary!' : 
-             score >= 75 ? '😎 Solid roast!' :
+            {score >= 90 ? (
+              <>
+                <span className="custom-fire">🔥</span> Legendary!
+              </>
+            ) : score >= 75 ? '😎 Solid roast!' :
              score >= 50 ? '👍 Not bad!' :
              score >= 25 ? '😬 Keep practicing...' :
              '💀 Oof...'}
