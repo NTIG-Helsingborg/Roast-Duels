@@ -42,6 +42,7 @@ function PlayerPanel({
   score,
   isJudging,
   error,
+  cooldownRemaining,
   playReload,
   playGunshot
 }) {
@@ -126,9 +127,9 @@ function PlayerPanel({
         className="dual-submit-btn"
         onMouseEnter={playReload}
         onClick={handleReadyClick}
-        disabled={isJudging || (!roastText.trim() && !isReady) || isOverLimit}
+        disabled={isJudging || (!roastText.trim() && !isReady) || isOverLimit || cooldownRemaining > 0}
       >
-        {isJudging ? 'Judging...' : isReady ? '✓ Ready!' : 'Ready to Battle'}
+        {isJudging ? 'Judging...' : cooldownRemaining > 0 ? `Wait ${cooldownRemaining}s` : isReady ? '✓ Ready!' : 'Ready to Battle'}
       </button>
 
       {score !== null && (
@@ -168,6 +169,7 @@ function DualGamePanel({ onBackToLanding }) {
   const [isJudging, setIsJudging] = useState(false);
   const [player1Error, setPlayer1Error] = useState(null);
   const [player2Error, setPlayer2Error] = useState(null);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const { playReload, playGunshot } = useButtonSounds();
 
   useEffect(() => {
@@ -181,6 +183,23 @@ function DualGamePanel({ onBackToLanding }) {
     };
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    let interval;
+    if (cooldownRemaining > 0) {
+      interval = setInterval(() => {
+        setCooldownRemaining(prev => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [cooldownRemaining]);
 
   const handleLogin = (p1Name, p2Name) => {
     setPlayer1Name(p1Name);
@@ -207,6 +226,10 @@ function DualGamePanel({ onBackToLanding }) {
     if (player1Ready) {
       setPlayer1Ready(false);
     } else {
+      if (cooldownRemaining > 0) {
+        setPlayer1Error(`Please wait ${cooldownRemaining} seconds before submitting another roast.`);
+        return;
+      }
       setPlayer1Ready(true);
       checkAndJudge(true, player2Ready);
     }
@@ -216,6 +239,10 @@ function DualGamePanel({ onBackToLanding }) {
     if (player2Ready) {
       setPlayer2Ready(false);
     } else {
+      if (cooldownRemaining > 0) {
+        setPlayer2Error(`Please wait ${cooldownRemaining} seconds before submitting another roast.`);
+        return;
+      }
       setPlayer2Ready(true);
       checkAndJudge(player1Ready, true);
     }
@@ -238,6 +265,9 @@ function DualGamePanel({ onBackToLanding }) {
 
         setPlayer1Score(score1);
         setPlayer2Score(score2);
+
+        // Set cooldown after successful submission
+        setCooldownRemaining(10);
 
         playGunshot();
 
@@ -292,6 +322,7 @@ function DualGamePanel({ onBackToLanding }) {
             score={player1Score}
             isJudging={isJudging}
             error={player1Error}
+            cooldownRemaining={cooldownRemaining}
             playReload={playReload}
             playGunshot={playGunshot}
           />
@@ -306,6 +337,7 @@ function DualGamePanel({ onBackToLanding }) {
             score={player2Score}
             isJudging={isJudging}
             error={player2Error}
+            cooldownRemaining={cooldownRemaining}
             playReload={playReload}
             playGunshot={playGunshot}
           />

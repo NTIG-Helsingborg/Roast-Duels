@@ -42,6 +42,8 @@ function GamePanel({ onBackToLanding }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(null);
   const [error, setError] = useState(null);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const { playReload, playGunshot } = useButtonSounds();
 
   useEffect(() => {
@@ -55,6 +57,23 @@ function GamePanel({ onBackToLanding }) {
     };
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    let interval;
+    if (cooldownRemaining > 0) {
+      interval = setInterval(() => {
+        setCooldownRemaining(prev => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [cooldownRemaining]);
 
   const handleLogin = (username) => {
     setPlayerName(username);
@@ -118,6 +137,11 @@ function GamePanel({ onBackToLanding }) {
       return;
     }
 
+    if (cooldownRemaining > 0) {
+      setError(`Please wait ${cooldownRemaining} seconds before submitting another roast.`);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setScore(null);
@@ -126,6 +150,10 @@ function GamePanel({ onBackToLanding }) {
       const userId = auth.getUserId();
       const judgedScore = await judgeRoast(roastText, userId);
       setScore(judgedScore);
+      
+      // Set cooldown after successful submission
+      setLastSubmissionTime(Date.now());
+      setCooldownRemaining(10);
       
       setTimeout(() => {
         playGunshot();
@@ -149,7 +177,7 @@ function GamePanel({ onBackToLanding }) {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !isSubmitting) {
+    if (e.key === 'Enter' && !isSubmitting && cooldownRemaining === 0) {
       handleSubmit();
     }
   };
@@ -225,9 +253,9 @@ function GamePanel({ onBackToLanding }) {
         className="btn-primary"
         onMouseEnter={playReload}
         onClick={handleSubmit}
-        disabled={isSubmitting || !roastText.trim() || isOverLimit}
+        disabled={isSubmitting || !roastText.trim() || isOverLimit || cooldownRemaining > 0}
       >
-        {isSubmitting ? 'Judging...' : 'Submit Roast'}
+        {isSubmitting ? 'Judging...' : cooldownRemaining > 0 ? `Wait ${cooldownRemaining}s` : 'Submit Roast'}
       </button>
 
       {score !== null && (
