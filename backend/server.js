@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts } from './db.js';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast } from './db.js';
 import fs from 'fs';
 dotenv.config();
 
@@ -187,9 +187,19 @@ app.post('/api/judge-roast', async (req, res) => {
     return res.status(400).json({ error: 'Roast text and user ID are required' });
   }
 
-  // Check for profanity and reject if found
   if (containsProfanity(roastText)) {
     return res.status(400).json({ error: 'Your roast contains inappropriate language and cannot be submitted.' });
+  }
+
+  const duplicateCheck = checkDuplicateRoast(roastText);
+  if (duplicateCheck.isDuplicate) {
+    let errorMessage = 'This roast is too similar to an existing roast. Please be more original!';
+    if (duplicateCheck.type === 'exact') {
+      errorMessage = 'This exact roast has already been submitted. Please be more original!';
+    } else if (duplicateCheck.type === 'similarity') {
+      errorMessage = `This roast is ${Math.round(duplicateCheck.similarity * 100)}% similar to an existing roast. Please be more original!`;
+    }
+    return res.status(400).json({ error: errorMessage });
   }
 
   try {

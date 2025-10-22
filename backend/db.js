@@ -97,4 +97,79 @@ export const updateUsername = (userId, newUsername) => {
   return query.run(newUsername, userId);
 };
 
+export const checkDuplicateRoast = (roastText) => {
+  const exactQuery = db.prepare('SELECT id FROM roasts WHERE LOWER(roast) = LOWER(?)');
+  const exactMatch = exactQuery.get(roastText);
+  if (exactMatch) {
+    return { isDuplicate: true, type: 'exact' };
+  }
+
+  const normalizedRoast = roastText.toLowerCase().trim();
+  const similarQuery = db.prepare(`
+    SELECT id, roast FROM roasts 
+    WHERE LOWER(TRIM(roast)) = ?
+  `);
+  const similarMatch = similarQuery.get(normalizedRoast);
+  if (similarMatch) {
+    return { isDuplicate: true, type: 'similar', existingRoast: similarMatch.roast };
+  }
+
+  const allRoastsQuery = db.prepare('SELECT id, roast FROM roasts ORDER BY date DESC LIMIT 1000');
+  const allRoasts = allRoastsQuery.all();
+  
+  for (const existingRoast of allRoasts) {
+    const similarity = calculateSimilarity(normalizedRoast, existingRoast.roast.toLowerCase().trim());
+    if (similarity >= 0.9) {
+      return { isDuplicate: true, type: 'similarity', existingRoast: existingRoast.roast, similarity };
+    }
+  }
+
+  return { isDuplicate: false };
+};
+
+const calculateSimilarity = (str1, str2) => {
+  if (str1 === str2) return 1.0;
+  
+  const len1 = str1.length;
+  const len2 = str2.length;
+  
+  if (len1 === 0 || len2 === 0) return 0.0;
+  
+  const longer = len1 > len2 ? str1 : str2;
+  const shorter = len1 > len2 ? str2 : str1;
+  
+  if (longer.length === 0) return 1.0;
+  
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
+};
+
+const levenshteinDistance = (str1, str2) => {
+  const matrix = [];
+  
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+};
+
 export default db;
