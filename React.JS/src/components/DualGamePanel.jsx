@@ -3,7 +3,9 @@ import './Components.css';
 import Leaderboard from './Leaderboard';
 import { useButtonSounds } from './useButtonSounds';
 import LoginModal from './LoginModal';
+import TutorialModal from './TutorialModal';
 import { auth } from '../utils/auth';
+import { tutorialUtils } from '../utils/tutorial';
 
 const MAX_CHARACTERS = 200;
 
@@ -42,6 +44,7 @@ function PlayerPanel({
   score,
   isJudging,
   error,
+  cooldownRemaining,
   playReload,
   playGunshot
 }) {
@@ -126,9 +129,9 @@ function PlayerPanel({
         className="dual-submit-btn"
         onMouseEnter={playReload}
         onClick={handleReadyClick}
-        disabled={isJudging || (!roastText.trim() && !isReady) || isOverLimit}
+        disabled={isJudging || (!roastText.trim() && !isReady) || isOverLimit || cooldownRemaining > 0}
       >
-        {isJudging ? 'Judging...' : isReady ? '✓ Ready!' : 'Ready to Battle'}
+        {isJudging ? 'Judging...' : cooldownRemaining > 0 ? `Wait ${cooldownRemaining}s` : isReady ? '✓ Ready!' : 'Ready to Battle'}
       </button>
 
       {score !== null && (
@@ -137,8 +140,11 @@ function PlayerPanel({
             {score}
           </div>
           <div className="score-emoji">
-            {score >= 90 ? '🔥 Legendary!' : 
-             score >= 75 ? '😎 Solid roast!' :
+            {score >= 90 ? (
+              <>
+                <span className="custom-fire">🔥</span> Legendary!
+              </>
+            ) : score >= 75 ? '😎 Solid roast!' :
              score >= 50 ? '👍 Not bad!' :
              score >= 25 ? '😬 Keep practicing...' :
              '💀 Oof...'}
@@ -159,6 +165,7 @@ function DualGamePanel({ onBackToLanding }) {
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [player1Roast, setPlayer1Roast] = useState('');
   const [player2Roast, setPlayer2Roast] = useState('');
   const [player1Ready, setPlayer1Ready] = useState(false);
@@ -168,6 +175,7 @@ function DualGamePanel({ onBackToLanding }) {
   const [isJudging, setIsJudging] = useState(false);
   const [player1Error, setPlayer1Error] = useState(null);
   const [player2Error, setPlayer2Error] = useState(null);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const { playReload, playGunshot } = useButtonSounds();
 
   useEffect(() => {
@@ -177,15 +185,57 @@ function DualGamePanel({ onBackToLanding }) {
         setPlayer1Name(data.username);
         setPlayer2Name(data.username + ' 2');
         setShowLoginModal(false);
+        
+        console.log('Checking tutorial for user:', data.username);
+        if (tutorialUtils.isFirstTimeUser()) {
+          console.log('Showing tutorial for first-time user');
+          setShowTutorial(true);
+          tutorialUtils.markVisited();
+        } else {
+          console.log('User has already seen tutorial, skipping');
+        }
       }
     };
     checkAuth();
+
+    const handleReplayTutorial = () => {
+      console.log('Replaying tutorial');
+      setShowTutorial(true);
+    };
+
+    window.addEventListener('replayTutorial', handleReplayTutorial);
+    
+    return () => {
+      window.removeEventListener('replayTutorial', handleReplayTutorial);
+    };
   }, []);
+
+  useEffect(() => {
+    let interval;
+    if (cooldownRemaining > 0) {
+      interval = setInterval(() => {
+        setCooldownRemaining(prev => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [cooldownRemaining]);
 
   const handleLogin = (p1Name, p2Name) => {
     setPlayer1Name(p1Name);
     setPlayer2Name(p2Name);
     setShowLoginModal(false);
+    
+    if (tutorialUtils.isFirstTimeUser()) {
+      setShowTutorial(true);
+      tutorialUtils.markVisited();
+    }
   };
 
   const handleLogout = () => {
@@ -207,6 +257,10 @@ function DualGamePanel({ onBackToLanding }) {
     if (player1Ready) {
       setPlayer1Ready(false);
     } else {
+      if (cooldownRemaining > 0) {
+        setPlayer1Error(`Please wait ${cooldownRemaining} seconds before submitting another roast.`);
+        return;
+      }
       setPlayer1Ready(true);
       checkAndJudge(true, player2Ready);
     }
@@ -216,6 +270,10 @@ function DualGamePanel({ onBackToLanding }) {
     if (player2Ready) {
       setPlayer2Ready(false);
     } else {
+      if (cooldownRemaining > 0) {
+        setPlayer2Error(`Please wait ${cooldownRemaining} seconds before submitting another roast.`);
+        return;
+      }
       setPlayer2Ready(true);
       checkAndJudge(player1Ready, true);
     }
@@ -238,6 +296,9 @@ function DualGamePanel({ onBackToLanding }) {
 
         setPlayer1Score(score1);
         setPlayer2Score(score2);
+
+        // Set cooldown after successful submission
+        setCooldownRemaining(10);
 
         playGunshot();
 
@@ -267,6 +328,10 @@ function DualGamePanel({ onBackToLanding }) {
     }
   };
 
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+  };
+
   return (
     <>
       <LoginModal 
@@ -275,6 +340,12 @@ function DualGamePanel({ onBackToLanding }) {
         onLogin={handleLogin}
         isDualMode={true}
         onBackToLanding={onBackToLanding}
+      />
+
+      <TutorialModal
+        isOpen={showTutorial}
+        onClose={handleTutorialClose}
+        gameMode="multiplayer"
       />
       
       <div className="dual-game-layout">
@@ -292,6 +363,7 @@ function DualGamePanel({ onBackToLanding }) {
             score={player1Score}
             isJudging={isJudging}
             error={player1Error}
+            cooldownRemaining={cooldownRemaining}
             playReload={playReload}
             playGunshot={playGunshot}
           />
@@ -306,6 +378,7 @@ function DualGamePanel({ onBackToLanding }) {
             score={player2Score}
             isJudging={isJudging}
             error={player2Error}
+            cooldownRemaining={cooldownRemaining}
             playReload={playReload}
             playGunshot={playGunshot}
           />
