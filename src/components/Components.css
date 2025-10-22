@@ -35,9 +35,24 @@
   margin-left: 1.5rem;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   text-wrap: nowrap;
+  z-index: 1000;
 }
 
 .back-button:hover {
+  background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
+  transform: translate(-0.125rem, -0.125rem);
+  box-shadow: 0.5rem 0.5rem 0 var(--spray-black);
+}
+
+.modal-back-button {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  margin-left: 0;
+  
+  z-index: 1001;
+}
+.modal-back-button:hover {
   background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
   transform: translate(-0.125rem, -0.125rem);
   box-shadow: 0.5rem 0.5rem 0 var(--spray-black);
@@ -427,7 +442,8 @@
 }
 
 .leaderboard-entries.recent-tab {
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .leaderboard-entry {
@@ -1091,6 +1107,31 @@ footer p:hover {
   .modal-submit-btn {
     font-size: 1.1rem;
     padding: 14px 20px;
+  }
+
+  .leaderboard-entries.recent-tab {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+  
+  .leaderboard-entries.recent-tab::-webkit-scrollbar {
+    width: 0.625rem;
+  }
+  
+  .leaderboard-entries.recent-tab::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border: 0.125rem solid var(--spray-black);
+  }
+  
+  .leaderboard-entries.recent-tab::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--spray-cyan) 0%, var(--spray-blue) 100%);
+    border: 0.125rem solid var(--spray-black);
+  }
+  
+  .leaderboard-entries.recent-tab::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
   }
 }
 
