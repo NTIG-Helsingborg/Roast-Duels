@@ -3,7 +3,7 @@ import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
 import { auth } from '../utils/auth';
 
-function LoginModal({ isOpen, onClose, onLogin, isDualMode = false, onBackToLanding }) {
+function LoginModal({ isOpen, onClose, onLogin, isDualMode = false }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -245,17 +245,6 @@ function LoginModal({ isOpen, onClose, onLogin, isDualMode = false, onBackToLand
           </button>
         </form>
       </div>
-      
-      {onBackToLanding && (
-        <button 
-          className="back-button modal-back-button"
-          type="button"
-          onMouseEnter={playReload}
-          onClick={onBackToLanding}
-        >
-          ← Back to Home
-        </button>
-      )}
     </div>
   );
 }

@@ -79,10 +79,10 @@ function App() {
             </div>
           </div>
           {gameMode === 'multiplayer' ? (
-            <DualGamePanel onBackToLanding={handleBackToLanding} />
+            <DualGamePanel />
           ) : (
             <div className="game-container">
-              <GamePanel onBackToLanding={handleBackToLanding} />
+              <GamePanel />
               <Leaderboard />
             </div>
           )}

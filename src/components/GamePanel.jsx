@@ -31,7 +31,7 @@ async function judgeRoast(roastText, userId) {
   }
 }
 
-function GamePanel({ onBackToLanding }) {
+function GamePanel() {
   const [playerName, setPlayerName] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -163,7 +163,6 @@ function GamePanel({ onBackToLanding }) {
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLogin}
-        onBackToLanding={onBackToLanding}
       />
       
       <ConfirmUsernameModal
