@@ -98,6 +98,10 @@ export const updateUsername = (userId, newUsername) => {
 };
 
 export const checkDuplicateRoast = (roastText) => {
+  if (roastText.trim().length < 20) {
+    return { isDuplicate: false };
+  }
+
   const exactQuery = db.prepare('SELECT id FROM roasts WHERE LOWER(roast) = LOWER(?)');
   const exactMatch = exactQuery.get(roastText);
   if (exactMatch) {
@@ -107,14 +111,14 @@ export const checkDuplicateRoast = (roastText) => {
   const normalizedRoast = roastText.toLowerCase().trim();
   const similarQuery = db.prepare(`
     SELECT id, roast FROM roasts 
-    WHERE LOWER(TRIM(roast)) = ?
+    WHERE LOWER(TRIM(roast)) = ? AND LENGTH(TRIM(roast)) >= 20
   `);
   const similarMatch = similarQuery.get(normalizedRoast);
   if (similarMatch) {
     return { isDuplicate: true, type: 'similar', existingRoast: similarMatch.roast };
   }
 
-  const allRoastsQuery = db.prepare('SELECT id, roast FROM roasts ORDER BY date DESC LIMIT 1000');
+  const allRoastsQuery = db.prepare('SELECT id, roast FROM roasts WHERE LENGTH(roast) >= 20 ORDER BY date DESC LIMIT 1000');
   const allRoasts = allRoastsQuery.all();
   
   for (const existingRoast of allRoasts) {
