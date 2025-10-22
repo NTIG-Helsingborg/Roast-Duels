@@ -4,9 +4,10 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts } from './db.js';
-
+import fs from 'fs';
 dotenv.config();
 
+const profanityList = JSON.parse(fs.readFileSync('./profanity.json', 'utf-8'));
 const app = express();
 const PORT = process.env.PORT || 3001;
 const SALT_ROUNDS = 10; //bcrypt complexity :p
@@ -17,11 +18,6 @@ app.use(cors());
 app.use(express.json());
 
 const containsProfanity = (text) => {
-  const profanityList = [
-    'nigger', 'nigga', 'faggot', 'fag', 'retard', 'chink', 
-    'spic', 'kike', 'cunt', 'tranny', 'negger', 'coon', 'neger'
-  ];
-  
   for (const word of profanityList) {
     const regex = new RegExp(`${word}`, 'gi');
     if (regex.test(text)) {
@@ -68,6 +64,10 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (/\s/.test(username)) {
     return res.status(400).json({ error: 'Username cannot contain spaces' });
+  }
+
+  if (containsProfanity(username)) {
+    return res.status(400).json({ error: 'Username contains inappropriate language' });
   }
 
   if (password.length < 6) {
@@ -152,6 +152,10 @@ app.put('/api/auth/update-username', authenticateToken, (req, res) => {
 
   if (/\s/.test(newUsername)) {
     return res.status(400).json({ error: 'Username cannot contain spaces' });
+  }
+
+  if (containsProfanity(newUsername)) {
+    return res.status(400).json({ error: 'Username contains inappropriate language' });
   }
 
   try {
