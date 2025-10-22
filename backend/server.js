@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast } from './db.js';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast, saveComment, getCommentsByRoastId, getCommentCountByRoastId } from './db.js';
 import fs from 'fs';
 dotenv.config();
 
@@ -325,6 +325,55 @@ app.get('/api/leaderboard/search', (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/comments/:roastId', (req, res) => {
+  try {
+    const roastId = parseInt(req.params.roastId);
+    if (isNaN(roastId)) {
+      return res.status(400).json({ error: 'Invalid roast ID' });
+    }
+    
+    const comments = getCommentsByRoastId(roastId);
+    res.json(comments);
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+app.post('/api/comments', authenticateToken, (req, res) => {
+  try {
+    const { roastId, comment } = req.body;
+    
+    if (comment.trim().length === 0) {
+      return res.status(400).json({ error: 'Comment cannot be empty' });
+    }
+    
+    if (comment.length > 200) {
+      return res.status(400).json({ error: 'Comment must be 200 characters or less' });
+    }
+    
+    if (containsProfanity(comment)) {
+      return res.status(400).json({ error: 'Comment contains inappropriate language' });
+    }
+    
+    const user = getUserByUsername(req.user.username);
+    const username = user.username;
+    const userId = user.id;
+    
+    const result = saveComment(parseInt(roastId), userId, username, comment.trim());
+    
+    res.status(201).json({
+      id: result.lastInsertRowid,
+      username,
+      comment: comment.trim(),
+      date: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error saving comment:', error);
+    res.status(500).json({ error: 'Failed to save comment' });
   }
 });
 

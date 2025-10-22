@@ -25,6 +25,19 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roast_id INTEGER NOT NULL,
+    user_id INTEGER,
+    username TEXT NOT NULL,
+    comment TEXT NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (roast_id) REFERENCES roasts(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )
+`);
+
 export const saveRoast = (userId, roast, score) => {
   const query = db.prepare('INSERT INTO roasts (user_id, roast, score) VALUES (?, ?, ?)');
   return query.run(userId, roast, score);
@@ -32,9 +45,15 @@ export const saveRoast = (userId, roast, score) => {
 
 export const getTopAllTime = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
     ORDER BY r.score DESC, r.date ASC 
     LIMIT ?
   `);
@@ -43,9 +62,15 @@ export const getTopAllTime = (limit = 50) => {
 
 export const getTopPast7Days = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
     WHERE r.date >= datetime('now', '-7 days')
     ORDER BY r.score DESC, r.date ASC 
     LIMIT ?
@@ -55,9 +80,15 @@ export const getTopPast7Days = (limit = 50) => {
 
 export const getMostRecent = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
     ORDER BY r.date DESC 
     LIMIT ?
   `);
@@ -66,9 +97,15 @@ export const getMostRecent = (limit = 50) => {
 
 export const searchRoasts = (searchQuery, limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
     WHERE u.username LIKE ? OR r.roast LIKE ?
     ORDER BY r.score DESC, r.date DESC 
     LIMIT ?
@@ -174,6 +211,27 @@ const levenshteinDistance = (str1, str2) => {
   }
   
   return matrix[str2.length][str1.length];
+};
+
+export const saveComment = (roastId, userId, username, comment) => {
+  const query = db.prepare('INSERT INTO comments (roast_id, user_id, username, comment) VALUES (?, ?, ?, ?)');
+  return query.run(roastId, userId, username, comment);
+};
+
+export const getCommentsByRoastId = (roastId) => {
+  const query = db.prepare(`
+    SELECT id, username, comment, date 
+    FROM comments 
+    WHERE roast_id = ? 
+    ORDER BY date ASC
+  `);
+  return query.all(roastId);
+};
+
+export const getCommentCountByRoastId = (roastId) => {
+  const query = db.prepare('SELECT COUNT(*) as count FROM comments WHERE roast_id = ?');
+  const result = query.get(roastId);
+  return result ? result.count : 0;
 };
 
 export default db;

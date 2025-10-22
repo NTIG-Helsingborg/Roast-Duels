@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './Components.css';
+import { auth } from '../utils/auth';
 
 const API_BASE = 'http://localhost:3001/api';
 
@@ -25,6 +26,10 @@ function Leaderboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [commentModal, setCommentModal] = useState({ isOpen: false, roastId: null });
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
 
   const fetchLeaderboard = useCallback(async (endpoint) => {
     setLoading(true);
@@ -82,6 +87,67 @@ function Leaderboard() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+  };
+
+  const openCommentModal = async (roastId) => {
+    setCommentModal({ isOpen: true, roastId });
+    setCommentLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/comments/${roastId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const closeCommentModal = () => {
+    setCommentModal({ isOpen: false, roastId: null });
+    setComments([]);
+    setNewComment('');
+  };
+
+  const submitComment = async () => {
+    if (!newComment.trim() || !commentModal.roastId) return;
+    
+    const token = auth.getToken();
+    if (!token) {
+      alert('You must be logged in to comment');
+      return;
+    }
+    
+    setCommentLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          roastId: commentModal.roastId,
+          comment: newComment.trim()
+        }),
+      });
+      
+      if (response.ok) {
+        const newCommentData = await response.json();
+        setComments(prev => [...prev, newCommentData]);
+        setNewComment('');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to submit comment');
+      }
+    } catch (err) {
+      console.error('Failed to submit comment:', err);
+      alert('Failed to submit comment. Please try again.');
+    } finally {
+      setCommentLoading(false);
+    }
   };
 
   const formatDateTime = (timestamp) => {
@@ -168,11 +234,76 @@ function Leaderboard() {
                 </p>
                 <p className="text">{roast.roast}</p>
                 <p className="time-stamp">{formatDateTime(roast.date)}</p>
+                <div className="roast-actions">
+                  <button className="like-btn" title="Like">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                  </button>
+                  <button className="comment-btn" title="Comments" onClick={() => openCommentModal(roast.id)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    {roast.commentCount > 0 && (
+                      <span className="comment-count">{roast.commentCount}</span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {commentModal.isOpen && (
+        <div className="modal-overlay" onClick={closeCommentModal}>
+          <div className="modal-content comment-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={closeCommentModal}>
+              ✕
+            </button>
+            <h3 className="modal-title">Comments</h3>
+            
+            <div className="comments-list">
+              {commentLoading ? (
+                <div className="comment-loading">Loading comments...</div>
+              ) : comments.length === 0 ? (
+                <div className="no-comments">No comments yet. Be the first to comment!</div>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="comment-item">
+                    <div className="comment-header">
+                      <span className="comment-author">{comment.username}</span>
+                      <span className="comment-time">{formatDateTime(comment.date)}</span>
+                    </div>
+                    <div className="comment-text">{comment.comment}</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="add-comment-section">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                className="comment-input"
+                rows="3"
+                maxLength="200"
+              />
+              <div className="comment-actions">
+                <span className="char-counter">{newComment.length}/200</span>
+                <button 
+                  className="submit-comment-btn"
+                  onClick={submitComment}
+                  disabled={!newComment.trim() || commentLoading}
+                >
+                  {commentLoading ? 'Posting...' : 'Post Comment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
