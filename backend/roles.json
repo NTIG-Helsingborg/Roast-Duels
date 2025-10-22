@@ -3,6 +3,7 @@
     {
       "id": 1,
       "tag": "dev",
+      "colour": "gradient from #ff0000 to #0000ff for example",
       "description": "Developer of the game"
     },
     {
@@ -13,7 +14,7 @@
     {
       "id": 3,
       "tag": "Roast Master",
-      "description": "Reward for standing out and delivering exceptional roasts"
+      "description": "Reward for standing out and delivering exceptional roasts ("
     }
   ]
 }
