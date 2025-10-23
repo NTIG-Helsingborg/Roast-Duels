@@ -31,7 +31,6 @@ function Leaderboard() {
   const [newComment, setNewComment] = useState('');
   const [showCommentsScreen, setShowCommentsScreen] = useState(false);
   const [commentsForRoast, setCommentsForRoast] = useState(null);
-  const [userToken] = useState(localStorage.getItem('token'));
 
   const fetchLeaderboard = useCallback(async (endpoint) => {
     setLoading(true);
@@ -121,7 +120,8 @@ function Leaderboard() {
   };
 
   const handleLike = async (roastId) => {
-    if (!userToken) {
+    const token = auth.getToken();
+    if (!token) {
       alert('Please log in to like roasts');
       return;
     }
@@ -131,7 +131,7 @@ function Leaderboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userToken}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ roastId })
       });
@@ -161,7 +161,8 @@ function Leaderboard() {
 
 
   const handleAddComment = async () => {
-    if (!userToken) {
+    const token = auth.getToken();
+    if (!token) {
       alert('Please log in to comment');
       return;
     }
@@ -172,7 +173,7 @@ function Leaderboard() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             roastId: commentsForRoast.id,
