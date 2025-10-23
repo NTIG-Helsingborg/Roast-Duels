@@ -30,15 +30,25 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS comments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     roast_id INTEGER NOT NULL,
-    user_id INTEGER,
-    username TEXT NOT NULL,
-    comment TEXT NOT NULL,
-    date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (roast_id) REFERENCES roasts(id),
+    user_id INTEGER NOT NULL,
+    comment_text TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (roast_id) REFERENCES roasts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roast_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (roast_id) REFERENCES roasts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE(roast_id, user_id)
+  )
+`);
 
 export const saveRoast = (userId, roast, score) => {
   const query = db.prepare('INSERT INTO roasts (user_id, roast, score) VALUES (?, ?, ?)');
@@ -134,6 +144,49 @@ export const getUserById = (userId) => {
 export const updateUsername = (userId, newUsername) => {
   const query = db.prepare('UPDATE users SET username = ? WHERE id = ?');
   return query.run(newUsername, userId);
+};
+
+export const addComment = (roastId, userId, commentText) => {
+  const query = db.prepare('INSERT INTO comments (roast_id, user_id, comment_text) VALUES (?, ?, ?)');
+  return query.run(roastId, userId, commentText);
+};
+
+export const getCommentsForRoast = (roastId) => {
+  const query = db.prepare(`
+    SELECT c.id, c.comment_text, c.created_at, u.username
+    FROM comments c
+    JOIN users u ON c.user_id = u.id
+    WHERE c.roast_id = ?
+    ORDER BY c.created_at ASC
+  `);
+  return query.all(roastId);
+};
+
+export const toggleLike = (roastId, userId) => {
+  const checkQuery = db.prepare('SELECT id FROM likes WHERE roast_id = ? AND user_id = ?');
+  const existingLike = checkQuery.get(roastId, userId);
+  
+  if (existingLike) {
+    const deleteQuery = db.prepare('DELETE FROM likes WHERE roast_id = ? AND user_id = ?');
+    deleteQuery.run(roastId, userId);
+    return { action: 'unliked', liked: false };
+  } else {
+    const insertQuery = db.prepare('INSERT INTO likes (roast_id, user_id) VALUES (?, ?)');
+    insertQuery.run(roastId, userId);
+    return { action: 'liked', liked: true };
+  }
+};
+
+export const getLikeCount = (roastId) => {
+  const query = db.prepare('SELECT COUNT(*) as count FROM likes WHERE roast_id = ?');
+  const result = query.get(roastId);
+  return result.count;
+};
+
+export const getUserLikeStatus = (roastId, userId) => {
+  const query = db.prepare('SELECT id FROM likes WHERE roast_id = ? AND user_id = ?');
+  const result = query.get(roastId, userId);
+  return !!result;
 };
 
 export const checkDuplicateRoast = (roastText) => {

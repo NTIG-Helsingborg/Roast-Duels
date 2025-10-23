@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Components.css';
 import { auth } from '../utils/auth';
 
@@ -26,11 +26,12 @@ function Leaderboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [commentModal, setCommentModal] = useState({ isOpen: false, roastId: null });
-  const [comments, setComments] = useState([]);
+  const [likes, setLikes] = useState({});
+  const [comments, setComments] = useState({});
   const [newComment, setNewComment] = useState('');
-  const [commentLoading, setCommentLoading] = useState(false);
-  const [likedRoasts, setLikedRoasts] = useState(new Set());
+  const [showCommentsScreen, setShowCommentsScreen] = useState(false);
+  const [commentsForRoast, setCommentsForRoast] = useState(null);
+  const [userToken] = useState(localStorage.getItem('token'));
 
   const fetchLeaderboard = useCallback(async (endpoint) => {
     setLoading(true);
@@ -41,12 +42,40 @@ function Leaderboard() {
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
       const data = await response.json();
       setRoasts(data);
+      
+      await fetchLikesAndComments(data);
     } catch (err) {
       setError(err.message);
       setRoasts([]);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const fetchLikesAndComments = useCallback(async (roastsData) => {
+    const likesData = {};
+    const commentsData = {};
+    
+    for (const roast of roastsData) {
+      try {
+        const likesResponse = await fetch(`${API_BASE}/likes/${roast.id}`);
+        if (likesResponse.ok) {
+          const likesResult = await likesResponse.json();
+          likesData[roast.id] = likesResult.likeCount;
+        }
+        
+        const commentsResponse = await fetch(`${API_BASE}/comments/${roast.id}`);
+        if (commentsResponse.ok) {
+          const commentsResult = await commentsResponse.json();
+          commentsData[roast.id] = commentsResult;
+        }
+      } catch (err) {
+        console.error(`Error fetching data for roast ${roast.id}:`, err);
+      }
+    }
+    
+    setLikes(likesData);
+    setComments(commentsData);
   }, []);
 
   const searchDatabase = useCallback(async (query) => {
@@ -60,14 +89,15 @@ function Leaderboard() {
       }
       const data = await response.json();
       setRoasts(data);
+      
+      await fetchLikesAndComments(data);
     } catch (err) {
-      console.error('Search error:', err);
       setError(err.message);
       setRoasts([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchLikesAndComments]);
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -90,106 +120,91 @@ function Leaderboard() {
     setActiveTab(tab);
   };
 
-  const openCommentModal = async (roastId) => {
-    setCommentModal({ isOpen: true, roastId });
-    setCommentLoading(true);
-    try {
-      const response = await fetch(`${API_BASE}/comments/${roastId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setComments(data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch comments:', err);
-    } finally {
-      setCommentLoading(false);
-    }
-  };
-
-  const closeCommentModal = () => {
-    setCommentModal({ isOpen: false, roastId: null });
-    setComments([]);
-    setNewComment('');
-  };
-
-  const submitComment = async () => {
-    if (!newComment.trim() || !commentModal.roastId) return;
-    
-    const token = auth.getToken();
-    if (!token) {
-      alert('You must be logged in to comment');
+  const handleLike = async (roastId) => {
+    if (!userToken) {
+      alert('Please log in to like roasts');
       return;
     }
-    
-    setCommentLoading(true);
+
     try {
-      const response = await fetch(`${API_BASE}/comments`, {
+      const response = await fetch(`${API_BASE}/likes/toggle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${userToken}`
         },
-        body: JSON.stringify({
-          roastId: commentModal.roastId,
-          comment: newComment.trim()
-        }),
+        body: JSON.stringify({ roastId })
       });
-      
+
       if (response.ok) {
-        const newCommentData = await response.json();
-        setComments(prev => [...prev, newCommentData]);
-        setNewComment('');
+        const result = await response.json();
+        setLikes(prev => ({
+          ...prev,
+          [roastId]: result.likeCount
+        }));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Failed to submit comment');
+        alert(errorData.error || 'Failed to like roast');
       }
     } catch (err) {
-      console.error('Failed to submit comment:', err);
-      alert('Failed to submit comment. Please try again.');
-    } finally {
-      setCommentLoading(false);
+      console.error('Error liking roast:', err);
+      alert('Failed to like roast');
     }
   };
 
-  const toggleLike = async (roastId) => {
-    const token = auth.getToken();
-    if (!token) {
-      alert('You must be logged in to like roasts');
+  const handleCommentClick = (roastId) => {
+    const roast = roasts.find(r => r.id === roastId);
+    setCommentsForRoast(roast);
+    setShowCommentsScreen(true);
+  };
+
+
+
+  const handleAddComment = async () => {
+    if (!userToken) {
+      alert('Please log in to comment');
       return;
     }
 
-    const isLiked = likedRoasts.has(roastId);
-    
-    try {
-      const response = await fetch(`${API_BASE}/likes`, {
-        method: isLiked ? 'DELETE' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ roastId }),
-      });
-      
-      if (response.ok) {
-        setLikedRoasts(prev => {
-          const newSet = new Set(prev);
-          if (isLiked) {
-            newSet.delete(roastId);
-          } else {
-            newSet.add(roastId);
-          }
-          return newSet;
+    if (newComment.trim() && commentsForRoast) {
+      try {
+        const response = await fetch(`${API_BASE}/comments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({
+            roastId: commentsForRoast.id,
+            commentText: newComment.trim()
+          })
         });
-        
-        fetchLeaderboard(activeTab);
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Failed to update like');
+
+        if (response.ok) {
+          const commentsResponse = await fetch(`${API_BASE}/comments/${commentsForRoast.id}`);
+          if (commentsResponse.ok) {
+            const commentsResult = await commentsResponse.json();
+            setComments(prev => ({
+              ...prev,
+              [commentsForRoast.id]: commentsResult
+            }));
+          }
+          setNewComment('');
+        } else {
+          const errorData = await response.json();
+          alert(errorData.error || 'Failed to add comment');
+        }
+      } catch (err) {
+        console.error('Error adding comment:', err);
+        alert('Failed to add comment');
       }
-    } catch (err) {
-      console.error('Failed to toggle like:', err);
-      alert('Failed to update like. Please try again.');
     }
+  };
+
+  const handleBackToLeaderboard = () => {
+    setShowCommentsScreen(false);
+    setCommentsForRoast(null);
+    setNewComment('');
   };
 
   const formatDateTime = (timestamp) => {
@@ -276,26 +291,26 @@ function Leaderboard() {
                 </p>
                 <p className="text">{roast.roast}</p>
                 <p className="time-stamp">{formatDateTime(roast.date)}</p>
-                <div className="roast-actions">
+                <div className="entry-actions">
                   <button 
-                    className={`like-btn ${likedRoasts.has(roast.id) ? 'liked' : ''}`} 
-                    title="Like" 
-                    onClick={() => toggleLike(roast.id)}
+                    className="like-btn"
+                    onClick={() => handleLike(roast.id)}
+                    title="Like this roast"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
-                    {roast.likeCount > 0 && (
-                      <span className="like-count">{roast.likeCount}</span>
-                    )}
+                    {likes[roast.id] || 0}
                   </button>
-                  <button className="comment-btn" title="Comments" onClick={() => openCommentModal(roast.id)}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  <button 
+                    className="comment-btn"
+                    onClick={() => handleCommentClick(roast.id)}
+                    title="Add a comment"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
                     </svg>
-                    {roast.commentCount > 0 && (
-                      <span className="comment-count">{roast.commentCount}</span>
-                    )}
+                    {comments[roast.id]?.length || 0}
                   </button>
                 </div>
               </div>
@@ -304,29 +319,35 @@ function Leaderboard() {
         )}
       </div>
 
-      {commentModal.isOpen && (
-        <div className="modal-overlay" onClick={closeCommentModal}>
-          <div className="modal-content comment-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={closeCommentModal}>
+      {showCommentsScreen && commentsForRoast && (
+        <div className="modal-overlay">
+          <div className="comments-modal">
+            <h2 className="modal-title">Comments</h2>
+            <button 
+              className="modal-close-btn"
+              onClick={handleBackToLeaderboard}
+            >
               ✕
             </button>
-            <h3 className="modal-title">Comments</h3>
+            
+            <div className="comments-roast-info">
+              <p className="comments-roast-text">"{commentsForRoast.roast}"</p>
+              <p className="comments-roast-author">by {commentsForRoast.username}</p>
+            </div>
             
             <div className="comments-list">
-              {commentLoading ? (
-                <div className="comment-loading">Loading comments...</div>
-              ) : comments.length === 0 ? (
-                <div className="no-comments">No comments yet. Be the first to comment!</div>
-              ) : (
-                comments.map((comment) => (
+              {comments[commentsForRoast.id]?.length > 0 ? (
+                comments[commentsForRoast.id].map((comment) => (
                   <div key={comment.id} className="comment-item">
                     <div className="comment-header">
                       <span className="comment-author">{comment.username}</span>
-                      <span className="comment-time">{formatDateTime(comment.date)}</span>
+                      <span className="comment-time">{formatDateTime(comment.created_at)}</span>
                     </div>
-                    <div className="comment-text">{comment.comment}</div>
+                    <p className="comment-text">{comment.comment_text}</p>
                   </div>
                 ))
+              ) : (
+                <div className="no-comments">No comments yet. Be the first to comment!</div>
               )}
             </div>
 
@@ -334,25 +355,22 @@ function Leaderboard() {
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
+                placeholder="Write your comment here..."
                 className="comment-input"
                 rows="3"
-                maxLength="200"
               />
-              <div className="comment-actions">
-                <span className="char-counter">{newComment.length}/200</span>
-                <button 
-                  className="submit-comment-btn"
-                  onClick={submitComment}
-                  disabled={!newComment.trim() || commentLoading}
-                >
-                  {commentLoading ? 'Posting...' : 'Post Comment'}
-                </button>
-              </div>
+              <button 
+                className="modal-submit-btn"
+                onClick={handleAddComment}
+                disabled={!newComment.trim()}
+              >
+                Add Comment
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

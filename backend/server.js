@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast, saveComment, getCommentsByRoastId, getCommentCountByRoastId, incrementLike, decrementLike, getLikeCountByRoastId } from './db.js';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast, addComment, getCommentsForRoast, toggleLike, getLikeCount, getUserLikeStatus } from './db.js';
 import fs from 'fs';
 dotenv.config();
 
@@ -329,14 +329,45 @@ app.get('/api/leaderboard/search', (req, res) => {
   }
 });
 
-app.get('/api/comments/:roastId', (req, res) => {
+app.post('/api/comments', authenticateToken, (req, res) => {
+  const { roastId, commentText } = req.body;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId || !commentText || !commentText.trim()) {
+    return res.status(400).json({ error: 'Roast ID and comment text are required' });
+  }
+
+  if (containsProfanity(commentText)) {
+    return res.status(400).json({ error: 'Comment contains inappropriate language' });
+  }
+
   try {
-    const roastId = parseInt(req.params.roastId);
-    if (isNaN(roastId)) {
-      return res.status(400).json({ error: 'Invalid roast ID' });
-    }
-    
-    const comments = getCommentsByRoastId(roastId);
+    const result = addComment(roastId, userId, commentText.trim());
+    res.json({ 
+      message: 'Comment added successfully',
+      commentId: result.lastInsertRowid 
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+app.get('/api/comments/:roastId', (req, res) => {
+  const { roastId } = req.params;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const comments = getCommentsForRoast(roastId);
     res.json(comments);
   } catch (error) {
     console.error('Error fetching comments:', error);
@@ -344,77 +375,69 @@ app.get('/api/comments/:roastId', (req, res) => {
   }
 });
 
-app.post('/api/comments', authenticateToken, (req, res) => {
+app.post('/api/likes/toggle', authenticateToken, (req, res) => {
+  const { roastId } = req.body;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
   try {
-    const { roastId, comment } = req.body;
-    
-    if (comment.trim().length === 0) {
-      return res.status(400).json({ error: 'Comment cannot be empty' });
-    }
-    
-    if (comment.length > 200) {
-      return res.status(400).json({ error: 'Comment must be 200 characters or less' });
-    }
-    
-    if (containsProfanity(comment)) {
-      return res.status(400).json({ error: 'Comment contains inappropriate language' });
-    }
-    
-    const user = getUserByUsername(req.user.username);
-    const username = user.username;
-    const userId = user.id;
-    
-    const result = saveComment(parseInt(roastId), userId, username, comment.trim());
-    
-    res.status(201).json({
-      id: result.lastInsertRowid,
-      username,
-      comment: comment.trim(),
-      date: new Date().toISOString()
+    const result = toggleLike(roastId, userId);
+    const likeCount = getLikeCount(roastId);
+    res.json({ 
+      ...result,
+      likeCount 
     });
   } catch (error) {
-    console.error('Error saving comment:', error);
-    res.status(500).json({ error: 'Failed to save comment' });
+    console.error('Error toggling like:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
   }
 });
 
-app.post('/api/likes', authenticateToken, (req, res) => {
+app.get('/api/likes/:roastId', (req, res) => {
+  const { roastId } = req.params;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
   try {
-    const { roastId } = req.body;
-    
-    if (!roastId) {
-      return res.status(400).json({ error: 'Roast ID is required' });
-    }
-    
-    const result = incrementLike(roastId);
-    
-    res.status(201).json({
-      message: 'Like added successfully',
-      likeCount: getLikeCountByRoastId(roastId)
-    });
+    const likeCount = getLikeCount(roastId);
+    res.json({ likeCount });
   } catch (error) {
-    console.error('Error adding like:', error);
-    res.status(500).json({ error: 'Failed to add like' });
+    console.error('Error fetching like count:', error);
+    res.status(500).json({ error: 'Failed to fetch like count' });
   }
 });
 
-app.delete('/api/likes', authenticateToken, (req, res) => {
+app.get('/api/likes/:roastId/status', authenticateToken, (req, res) => {
+  const { roastId } = req.params;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
   try {
-    const { roastId } = req.body;
-    
-    if (!roastId) {
-      return res.status(400).json({ error: 'Roast ID is required' });
-    }
-    
-    const result = decrementLike(roastId);
-    
-    res.status(200).json({
-      message: 'Like removed successfully',
-      likeCount: getLikeCountByRoastId(roastId)
-    });
+    const isLiked = getUserLikeStatus(roastId, userId);
+    res.json({ isLiked });
   } catch (error) {
-    console.error('Error removing like:', error);
-    res.status(500).json({ error: 'Failed to remove like' });
+    console.error('Error checking like status:', error);
+    res.status(500).json({ error: 'Failed to check like status' });
   }
 });
 
