@@ -1341,6 +1341,27 @@ footer p:hover {
   z-index: 10001;
   transition: all 0.3s ease;
   transform-origin: center;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Responsive modal styles */
+@media (max-width: 768px) {
+  .tutorial-modal {
+    max-width: 95%;
+    width: 90%;
+    padding: 1.5rem;
+    max-height: 70vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .tutorial-modal {
+    max-width: 98%;
+    width: 95%;
+    padding: 1rem;
+    max-height: 60vh;
+  }
 }
 
 .tutorial-header {
@@ -1539,22 +1560,18 @@ body.tutorial-active button:not(.tutorial-highlight) {
 
 /* Responsive Tutorial Styles */
 @media (max-width: 768px) {
-  .tutorial-modal {
-    padding: 1.5rem;
-    max-width: 95%;
-  }
-
   .tutorial-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 
   .step-title {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
 
   .step-description {
-    font-size: 1rem;
+    font-size: 0.95rem;
     padding: 0 0.5rem;
+    line-height: 1.5;
   }
 
   .tutorial-buttons {
@@ -1565,10 +1582,36 @@ body.tutorial-active button:not(.tutorial-highlight) {
   .tutorial-btn {
     width: 100%;
     max-width: 200px;
+    font-size: 0.9rem;
+    padding: 10px 20px;
   }
 
-  .tutorial-arrow-container {
-    display: none; /* Hide arrows on mobile for cleaner look */
+  .tutorial-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .tutorial-content {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tutorial-title {
+    font-size: 1.5rem;
+  }
+
+  .step-title {
+    font-size: 1.1rem;
+  }
+
+  .step-description {
+    font-size: 0.9rem;
+    padding: 0 0.25rem;
+  }
+
+  .tutorial-btn {
+    font-size: 0.85rem;
+    padding: 8px 16px;
   }
 }
 
