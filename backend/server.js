@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast } from './db.js';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast, addComment, getCommentsForRoast, toggleLike, getLikeCount, getUserLikeStatus } from './db.js';
 import fs from 'fs';
 dotenv.config();
 
@@ -325,6 +325,118 @@ app.get('/api/leaderboard/search', (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/comments', authenticateToken, (req, res) => {
+  const { roastId, commentText } = req.body;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId || !commentText || !commentText.trim()) {
+    return res.status(400).json({ error: 'Roast ID and comment text are required' });
+  }
+
+  if (containsProfanity(commentText)) {
+    return res.status(400).json({ error: 'Comment contains inappropriate language' });
+  }
+
+  try {
+    const result = addComment(roastId, userId, commentText.trim());
+    res.json({ 
+      message: 'Comment added successfully',
+      commentId: result.lastInsertRowid 
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+app.get('/api/comments/:roastId', (req, res) => {
+  const { roastId } = req.params;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const comments = getCommentsForRoast(roastId);
+    res.json(comments);
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+app.post('/api/likes/toggle', authenticateToken, (req, res) => {
+  const { roastId } = req.body;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const result = toggleLike(roastId, userId);
+    const likeCount = getLikeCount(roastId);
+    res.json({ 
+      ...result,
+      likeCount 
+    });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
+});
+
+app.get('/api/likes/:roastId', (req, res) => {
+  const { roastId } = req.params;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const likeCount = getLikeCount(roastId);
+    res.json({ likeCount });
+  } catch (error) {
+    console.error('Error fetching like count:', error);
+    res.status(500).json({ error: 'Failed to fetch like count' });
+  }
+});
+
+app.get('/api/likes/:roastId/status', authenticateToken, (req, res) => {
+  const { roastId } = req.params;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const isLiked = getUserLikeStatus(roastId, userId);
+    res.json({ isLiked });
+  } catch (error) {
+    console.error('Error checking like status:', error);
+    res.status(500).json({ error: 'Failed to check like status' });
   }
 });
 
