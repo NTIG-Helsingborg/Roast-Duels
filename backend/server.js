@@ -236,6 +236,7 @@ SCORING PHILOSOPHY:
 - Use the FULL 0-100 spectrum naturally - no number bias
 - Consider ALL numbers: 23, 34, 47, 56, 67, 78, 89, 91, etc.
 - Vary your scoring patterns completely
+- Non-English or nonsensical roasts score 10-25 regardless of length
 
 SCORING RANGES:
 - 0-25: Terrible execution, unfunny, poorly structured
