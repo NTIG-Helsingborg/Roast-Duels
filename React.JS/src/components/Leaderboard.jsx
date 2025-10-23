@@ -30,6 +30,7 @@ function Leaderboard() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
+  const [likedRoasts, setLikedRoasts] = useState(new Set());
 
   const fetchLeaderboard = useCallback(async (endpoint) => {
     setLoading(true);
@@ -150,6 +151,47 @@ function Leaderboard() {
     }
   };
 
+  const toggleLike = async (roastId) => {
+    const token = auth.getToken();
+    if (!token) {
+      alert('You must be logged in to like roasts');
+      return;
+    }
+
+    const isLiked = likedRoasts.has(roastId);
+    
+    try {
+      const response = await fetch(`${API_BASE}/likes`, {
+        method: isLiked ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ roastId }),
+      });
+      
+      if (response.ok) {
+        setLikedRoasts(prev => {
+          const newSet = new Set(prev);
+          if (isLiked) {
+            newSet.delete(roastId);
+          } else {
+            newSet.add(roastId);
+          }
+          return newSet;
+        });
+        
+        fetchLeaderboard(activeTab);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to update like');
+      }
+    } catch (err) {
+      console.error('Failed to toggle like:', err);
+      alert('Failed to update like. Please try again.');
+    }
+  };
+
   const formatDateTime = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleString('en-US', { 
@@ -235,10 +277,17 @@ function Leaderboard() {
                 <p className="text">{roast.roast}</p>
                 <p className="time-stamp">{formatDateTime(roast.date)}</p>
                 <div className="roast-actions">
-                  <button className="like-btn" title="Like">
+                  <button 
+                    className={`like-btn ${likedRoasts.has(roast.id) ? 'liked' : ''}`} 
+                    title="Like" 
+                    onClick={() => toggleLike(roast.id)}
+                  >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
+                    {roast.likeCount > 0 && (
+                      <span className="like-count">{roast.likeCount}</span>
+                    )}
                   </button>
                   <button className="comment-btn" title="Comments" onClick={() => openCommentModal(roast.id)}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

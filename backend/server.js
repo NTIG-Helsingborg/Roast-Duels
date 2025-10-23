@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast, saveComment, getCommentsByRoastId, getCommentCountByRoastId } from './db.js';
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast, saveComment, getCommentsByRoastId, getCommentCountByRoastId, incrementLike, decrementLike, getLikeCountByRoastId } from './db.js';
 import fs from 'fs';
 dotenv.config();
 
@@ -374,6 +374,46 @@ app.post('/api/comments', authenticateToken, (req, res) => {
   } catch (error) {
     console.error('Error saving comment:', error);
     res.status(500).json({ error: 'Failed to save comment' });
+  }
+});
+
+app.post('/api/likes', authenticateToken, (req, res) => {
+  try {
+    const { roastId } = req.body;
+    
+    if (!roastId) {
+      return res.status(400).json({ error: 'Roast ID is required' });
+    }
+    
+    const result = incrementLike(roastId);
+    
+    res.status(201).json({
+      message: 'Like added successfully',
+      likeCount: getLikeCountByRoastId(roastId)
+    });
+  } catch (error) {
+    console.error('Error adding like:', error);
+    res.status(500).json({ error: 'Failed to add like' });
+  }
+});
+
+app.delete('/api/likes', authenticateToken, (req, res) => {
+  try {
+    const { roastId } = req.body;
+    
+    if (!roastId) {
+      return res.status(400).json({ error: 'Roast ID is required' });
+    }
+    
+    const result = decrementLike(roastId);
+    
+    res.status(200).json({
+      message: 'Like removed successfully',
+      likeCount: getLikeCountByRoastId(roastId)
+    });
+  } catch (error) {
+    console.error('Error removing like:', error);
+    res.status(500).json({ error: 'Failed to remove like' });
   }
 });
 

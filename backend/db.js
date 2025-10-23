@@ -20,6 +20,7 @@ db.exec(`
     user_id INTEGER NOT NULL,
     roast TEXT NOT NULL,
     score INTEGER NOT NULL,
+    likes INTEGER DEFAULT 0,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )
@@ -38,6 +39,7 @@ db.exec(`
   )
 `);
 
+
 export const saveRoast = (userId, roast, score) => {
   const query = db.prepare('INSERT INTO roasts (user_id, roast, score) VALUES (?, ?, ?)');
   return query.run(userId, roast, score);
@@ -45,7 +47,7 @@ export const saveRoast = (userId, roast, score) => {
 
 export const getTopAllTime = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date,
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
            COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
@@ -62,7 +64,7 @@ export const getTopAllTime = (limit = 50) => {
 
 export const getTopPast7Days = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date,
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
            COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
@@ -80,7 +82,7 @@ export const getTopPast7Days = (limit = 50) => {
 
 export const getMostRecent = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date,
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
            COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
@@ -97,7 +99,7 @@ export const getMostRecent = (limit = 50) => {
 
 export const searchRoasts = (searchQuery, limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date,
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
            COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
@@ -232,6 +234,22 @@ export const getCommentCountByRoastId = (roastId) => {
   const query = db.prepare('SELECT COUNT(*) as count FROM comments WHERE roast_id = ?');
   const result = query.get(roastId);
   return result ? result.count : 0;
+};
+
+export const incrementLike = (roastId) => {
+  const query = db.prepare('UPDATE roasts SET likes = likes + 1 WHERE id = ?');
+  return query.run(roastId);
+};
+
+export const decrementLike = (roastId) => {
+  const query = db.prepare('UPDATE roasts SET likes = likes - 1 WHERE id = ? AND likes > 0');
+  return query.run(roastId);
+};
+
+export const getLikeCountByRoastId = (roastId) => {
+  const query = db.prepare('SELECT likes FROM roasts WHERE id = ?');
+  const result = query.get(roastId);
+  return result ? result.likes : 0;
 };
 
 export default db;

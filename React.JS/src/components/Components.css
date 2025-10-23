@@ -508,6 +508,16 @@
   transform: translateY(-2px) scale(1.05);
 }
 
+.like-btn.liked {
+  color: var(--spray-magenta);
+  background: transparent;
+}
+
+.like-btn.liked:hover {
+  color: var(--spray-magenta);
+  background: transparent;
+}
+
 .dislike-btn:hover {
   color: var(--spray-black);
   transform: translateY(-2px) scale(1.05);
@@ -518,7 +528,7 @@
   transform: translateY(-2px) scale(1.05);
 }
 
-.comment-count {
+.comment-count, .like-count {
   margin-left: 4px;
   font-size: 0.8rem;
   font-weight: 600;
