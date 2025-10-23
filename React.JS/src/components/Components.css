@@ -1451,6 +1451,24 @@ body.tutorial-active * {
   pointer-events: none !important;
 }
 
+/* Hide all components on mobile during tutorial */
+@media (max-width: 768px) {
+  body.tutorial-active .game-panel,
+  body.tutorial-active .dual-player-panel,
+  body.tutorial-active .leaderboard,
+  body.tutorial-active .back-button,
+  body.tutorial-active .component-container {
+    opacity: 0.1 !important;
+    visibility: hidden !important;
+  }
+  
+  /* Keep the modal visible */
+  body.tutorial-active .tutorial-modal {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
 body.tutorial-active .tutorial-modal,
 body.tutorial-active .tutorial-modal * {
   pointer-events: auto !important;
