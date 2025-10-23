@@ -1331,13 +1331,16 @@ footer p:hover {
 }
 
 .tutorial-modal {
+  position: fixed;
   max-width: 600px;
   width: 95%;
   padding: 2rem;
   background: linear-gradient(135deg, rgba(248, 249, 250, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
   border: 5px solid var(--spray-black);
   box-shadow: 15px 15px 0 rgba(0, 0, 0, 0.5);
-  position: relative;
+  z-index: 10001;
+  transition: all 0.3s ease;
+  transform-origin: center;
 }
 
 .tutorial-header {
@@ -1479,12 +1482,20 @@ footer p:hover {
   box-shadow: 6px 6px 0 var(--spray-magenta);
 }
 
-/* Tutorial Highlight Styles - Simple visibility approach */
+/* Tutorial Highlight Styles - Ensure submit buttons are visible */
 .tutorial-highlight {
-  filter: blur(0px) !important;
+  z-index: 10005 !important;
+  pointer-events: none !important;
+  position: relative !important;
+}
+
+/* Force submit buttons to be visible */
+.tutorial-highlight.btn-primary,
+.tutorial-highlight.dual-submit-btn {
+  z-index: 10005 !important;
+  position: relative !important;
   opacity: 1 !important;
-  z-index: 10000;
-  pointer-events: none !important; /* Prevent interaction with highlighted elements */
+  visibility: visible !important;
 }
 
 /* Disable all interactions when tutorial is active */
@@ -1498,10 +1509,10 @@ body.tutorial-active .tutorial-modal * {
 }
 
 /* Lower z-index of elements that might overlap with tutorial */
-body.tutorial-active .btn-primary,
-body.tutorial-active .dual-submit-btn,
-body.tutorial-active .back-button,
-body.tutorial-active button {
+body.tutorial-active .btn-primary:not(.tutorial-highlight),
+body.tutorial-active .dual-submit-btn:not(.tutorial-highlight),
+body.tutorial-active .back-button:not(.tutorial-highlight),
+body.tutorial-active button:not(.tutorial-highlight) {
   z-index: 1 !important;
 }
 
