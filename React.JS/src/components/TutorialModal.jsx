@@ -13,7 +13,7 @@ const TUTORIAL_STEPS = [
   {
     id: 'roast-input',
     title: 'Step 2: Enter Your Roast',
-    description: 'Type your roast here! Be creative, witty, and keep it under 200 characters. The AI will judge your roast.',
+    description: 'Type your roast here! Be creative, witty, and keep it under 200 characters, type in English for better score. The AI will judge your roast.',
     selector: '#roast-input, input[type="text"]',
     position: 'bottom'
   },
@@ -49,7 +49,7 @@ function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
 
   useEffect(() => {
     if (isOpen) {
-      highlightCurrentElement();
+      setCurrentStep(0); // Always start from first step
       document.body.classList.add('tutorial-active');
     } else {
       document.body.classList.remove('tutorial-active');
@@ -58,6 +58,12 @@ function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
     return () => {
       document.body.classList.remove('tutorial-active');
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      highlightCurrentElement();
+    }
   }, [isOpen, currentStep]);
 
   const highlightCurrentElement = () => {
@@ -68,37 +74,62 @@ function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
       el.classList.remove('tutorial-highlight');
     });
 
-    const elements = document.querySelectorAll(step.selector);
-    if (elements.length > 0) {
-      const element = elements[0];
-      element.classList.add('tutorial-highlight');
-      
-      // Scale down modal for big components
-      const elementRect = element.getBoundingClientRect();
-      const isBigComponent = elementRect.width > 300 || elementRect.height > 100;
-      setModalScale(isBigComponent ? 0.8 : 1);
-      
-      calculateModalPosition(element);
+    // Only highlight elements on larger screens
+    const isSmallScreen = window.innerWidth < 768;
+    if (!isSmallScreen) {
+      const elements = document.querySelectorAll(step.selector);
+      if (elements.length > 0) {
+        const element = elements[0];
+        element.classList.add('tutorial-highlight');
+        
+        // Scale down modal for big components
+        const elementRect = element.getBoundingClientRect();
+        const isBigComponent = elementRect.width > 300 || elementRect.height > 100;
+        setModalScale(isBigComponent ? 0.8 : 1);
+        
+        calculateModalPosition(element);
+      } else {
+        // If no element found, center the modal
+        setModalScale(1);
+        calculateModalPosition(null);
+      }
+    } else {
+      // On mobile, always use normal scale and center modal
+      setModalScale(1);
+      calculateModalPosition(null);
     }
   };
 
   const calculateModalPosition = (highlightedElement) => {
     if (!modalRef.current) return;
 
-    const elementRect = highlightedElement.getBoundingClientRect();
-    const modalRect = modalRef.current.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    const modalWidth = 600; // Approximate modal width
-    const modalHeight = 400; // Approximate modal height
-    const padding = 20; // Space between modal and highlighted element
+    // If no element provided or on mobile, center the modal
+    if (!highlightedElement || viewportWidth < 768) {
+      const newPosition = {
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
+      };
+      setModalPosition(newPosition);
+      return;
+    }
+    
+    // For larger screens, we need the element rect
+    const elementRect = highlightedElement.getBoundingClientRect();
+    
+    // Responsive modal sizing (only for larger screens now)
+    const modalWidth = 600;
+    const modalHeight = 400;
+    const padding = 20;
     
     let newPosition = { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
     
     // Special positioning for submit button (step 3)
     if (currentStep === 2) { // Step 3 is index 2
-      // Position modal to the far right of the submit button
+      // On larger screens, position modal to the far right
       const rightPosition = viewportWidth - modalWidth - padding;
       newPosition = {
         top: `${elementRect.top + (elementRect.height / 2)}px`,
@@ -106,38 +137,10 @@ function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
         transform: 'translateY(-50%)'
       };
     } else {
-      // Check if element is in top half of screen
-    if (elementRect.top < viewportHeight / 2) {
-      // Position modal below the element
-      const topPosition = elementRect.bottom + padding;
-      if (topPosition + modalHeight < viewportHeight) {
-        newPosition = {
-          top: `${topPosition}px`,
-          left: '50%',
-          transform: 'translateX(-50%)'
-        };
-      } else {
-        // If not enough space below, position above
-        const topPosition = elementRect.top - modalHeight - padding;
-        if (topPosition > 0) {
-          newPosition = {
-            top: `${topPosition}px`,
-            left: '50%',
-            transform: 'translateX(-50%)'
-          };
-        }
-      }
-    } else {
-      // Position modal above the element
-      const topPosition = elementRect.top - modalHeight - padding;
-      if (topPosition > 0) {
-        newPosition = {
-          top: `${topPosition}px`,
-          left: '50%',
-          transform: 'translateX(-50%)'
-        };
-      } else {
-        // If not enough space above, position below
+      // Regular positioning logic for other steps
+      // On larger screens, use smart positioning
+      if (elementRect.top < viewportHeight / 2) {
+        // Position modal below the element
         const topPosition = elementRect.bottom + padding;
         if (topPosition + modalHeight < viewportHeight) {
           newPosition = {
@@ -145,9 +148,38 @@ function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
             left: '50%',
             transform: 'translateX(-50%)'
           };
+        } else {
+          // If not enough space below, position above
+          const topPositionAbove = elementRect.top - modalHeight - padding;
+          if (topPositionAbove > 0) {
+            newPosition = {
+              top: `${topPositionAbove}px`,
+              left: '50%',
+              transform: 'translateX(-50%)'
+            };
+          }
+        }
+      } else {
+        // Position modal above the element
+        const topPositionAbove = elementRect.top - modalHeight - padding;
+        if (topPositionAbove > 0) {
+          newPosition = {
+            top: `${topPositionAbove}px`,
+            left: '50%',
+            transform: 'translateX(-50%)'
+          };
+        } else {
+          // If not enough space above, position below
+          const topPosition = elementRect.bottom + padding;
+          if (topPosition + modalHeight < viewportHeight) {
+            newPosition = {
+              top: `${topPosition}px`,
+              left: '50%',
+              transform: 'translateX(-50%)'
+            };
+          }
         }
       }
-    }
     }
     
     setModalPosition(newPosition);
