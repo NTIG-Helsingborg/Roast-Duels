@@ -471,9 +471,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 20px;
+  padding: 0.5rem 1rem;
   font-size: 2rem;
-  min-width: 80px;
+  flex: 0 0 25%;
   text-shadow: 3px 3px 0 var(--spray-black);
   position: relative;
   border-right: 3px solid var(--spray-black);
@@ -481,7 +481,7 @@
 
 .roast-content {
   padding: 10px 15px;
-  flex: 1;
+  flex: 0 0 75%;
 }
 
 .roast-actions {
@@ -909,79 +909,6 @@ footer p:hover {
   
   .dual-game-layout {
     padding: 1rem;
-  }
-}
-
-/* Additional responsive styles for leaderboard and comments */
-@media (max-width: 48rem) {
-  .leaderboard-tabs {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .leaderboard-tab {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-  }
-  
-  .leaderboard-entry {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .score {
-    align-self: flex-start;
-    min-width: 3rem;
-    min-height: 3rem;
-    font-size: 1.2rem;
-  }
-  
-  .roast-content {
-    flex: 1;
-  }
-  
-  .roast-actions {
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .like-btn, .comment-btn {
-    padding: 0.5rem;
-  }
-  
-  .comment-count {
-    font-size: 0.7rem;
-  }
-}
-
-@media (max-width: 30rem) {
-  .landing-page {
-    padding: 0.5rem;
-  }
-  
-  .landing-content {
-    gap: 2rem;
-    margin-bottom: 1.5rem; 
-  }
-  
-  .mute-btn {
-    position: fixed;
-    bottom: 0.5rem;
-    right: 0.5rem;
-    padding: 0.5rem;
-  }
-  
-  .game-button {
-    padding: 0.875rem 1.5rem;
-    font-size: 1.1rem;
-  }
-  
-  .component-container h2 {
-    font-size: 1.8rem;
-  }
-  
-  .player-title {
-    font-size: 2rem;
   }
 }
 
