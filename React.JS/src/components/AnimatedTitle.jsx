@@ -3,9 +3,10 @@ import sprayPaintSound from '../assets/spraypaintsound.mp3'
 import { useAudioReactive } from './useAudioReactive'
 import './Components.css'
 import { motion } from 'framer-motion'
+import { createPortal } from 'react-dom'
 
-function AnimatedTitle({ 
-  title = "Roast Battles", 
+function AnimatedTitle({
+  title = "Roast Battles",
   className = "",
   soundVolume = 0.3,
   soundPlaybackRate = 1.0,
@@ -20,13 +21,13 @@ function AnimatedTitle({
   const animationStarted = useRef(false)
   const [shouldPlaySound, setShouldPlaySound] = useState(false)
   const [userHasInteracted, setUserHasInteracted] = useState(false)
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
   const soundTimeoutRef = useRef(null)
   const audioRef = useRef(null)
   const [audioKey] = useState(() => Date.now() + Math.random())
   const initialSizeRef = useRef(null)
   const [responsiveScale, setResponsiveScale] = useState(1)
-  
+  const tooltipRef = useRef(null)
+
   const [shouldDelayAudio, setShouldDelayAudio] = useState(() => {
     try {
       return sessionStorage.getItem('titleAnimated') !== 'true'
@@ -34,46 +35,34 @@ function AnimatedTitle({
       return true
     }
   })
-  
+
   const audioData = useAudioReactive(true, shouldDelayAudio ? 1000 : 0)
-  
+
   useEffect(() => {
     if (audioData.scale !== 1) {
       console.log('[AnimatedTitle] 🎵 Audio pulse:', audioData.scale.toFixed(3))
     }
   }, [audioData.scale])
-  
+
   useEffect(() => {
     console.log('[AnimatedTitle] Audio delay setting:', shouldDelayAudio ? '1000ms (waiting for animation)' : '0ms (instant sync)')
   }, [shouldDelayAudio])
-  
+
   useEffect(() => {
     const updateResponsiveScale = () => {
       const scale = window.innerWidth / 1200
       setResponsiveScale(scale)
     }
-    
+
     updateResponsiveScale()
     window.addEventListener('resize', updateResponsiveScale)
-    
+
     return () => {
       window.removeEventListener('resize', updateResponsiveScale)
     }
   }, [])
-  
-  const traceColors = ["#00d9ff", "#0dc6e7", "#26c9e8", "#1fb5d1"]
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY })
-    }
-    if (!userHasInteracted) {
-      document.addEventListener('mousemove', handleMouseMove)
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-    }
-  }, [userHasInteracted])
+  const traceColors = ["#00d9ff", "#0dc6e7", "#26c9e8", "#1fb5d1"]
 
   useEffect(() => {
     const handleUserInteraction = () => {
@@ -94,14 +83,14 @@ function AnimatedTitle({
 
   useEffect(() => {
     const hasAnimated = sessionStorage.getItem('titleAnimated') === 'true'
-    
+
     if (hasAnimated) {
       console.log('[AnimatedTitle] ⚡ Returning - run animation but with instant audio sync')
       setShouldDelayAudio(false)
     } else {
       console.log('[AnimatedTitle] 🎨 First visit - starting animation with delayed audio')
     }
-    
+
     setTextTraced(false)
     animationStarted.current = false
   }, [])
@@ -164,23 +153,23 @@ function AnimatedTitle({
       }
 
       let actualFontSize = 176
-      
+
       const canvas = canvasRef.current
       const titleElement = measureRef.current
       let titleRect = null
-      
+
       requestAnimationFrame(() => {
         if (!titleElement || !canvas) return
-        
+
         titleRect = titleElement.getBoundingClientRect()
-        
+
         const testCanvas = document.createElement('canvas')
         const testCtx = testCanvas.getContext('2d')
         testCtx.font = `${actualFontSize}px "Snakehead Graffiti", sans-serif`
         const metrics = testCtx.measureText(title)
-  const letterSpacingAdjustment = title.length * actualFontSize * (-0.02)
-  const canvasTextWidth = metrics.width + letterSpacingAdjustment
-        
+        const letterSpacingAdjustment = title.length * actualFontSize * (-0.02)
+        const canvasTextWidth = metrics.width + letterSpacingAdjustment
+
         console.log('[AnimatedTitle] Measured title:', {
           domWidth: titleRect.width,
           height: titleRect.height,
@@ -190,7 +179,7 @@ function AnimatedTitle({
           canvasTextWidth: canvasTextWidth,
           metricsWidth: metrics.width
         })
-        
+
         const extraSpace = 60
         const actualWidth = canvasTextWidth
         canvas.width = actualWidth + (extraSpace * 2)
@@ -200,12 +189,12 @@ function AnimatedTitle({
           stage.x = extraSpace
           stage.y = extraSpace
         }
-        
+
         initialSizeRef.current = {
           width: actualWidth,
           height: titleRect.height
         }
-        
+
         setTimeout(() => {
           createTextTrace()
         }, 500)
@@ -285,9 +274,9 @@ function AnimatedTitle({
         const textWidth = canvasContentWidth
         const textHeight = titleRect.height
         const baseSprayRadius = Math.max(1, actualFontSize / 40)
-        
+
         const stepSize = Math.max(4, Math.floor(actualFontSize / 20))
-        
+
         for (let x = 0; x < textWidth; x += stepSize) {
           // Use metrics.top if available, otherwise fallback
           const testCanvas = document.createElement('canvas');
@@ -330,7 +319,7 @@ function AnimatedTitle({
           }, 1000)
           return
         }
-        
+
         points.forEach((point) => {
           setTimeout(() => {
             const color = traceColors[Math.floor(Math.random() * traceColors.length)]
@@ -340,20 +329,20 @@ function AnimatedTitle({
             createParticle(point.x, point.y, size, alpha, color)
           }, point.delay)
         })
-        
+
         const maxDelay = Math.max(...points.map(p => p.delay))
-        
+
         setTimeout(() => {
           setTextTraced(true)
           setShouldDelayAudio(false)
           console.log('[AnimatedTitle] 🎵 Animation complete, audio sync active')
-          
+
           try {
             sessionStorage.setItem('titleAnimated', 'true')
           } catch (e) {}
         }, maxDelay + 1000)
       }
-      
+
       return () => {
         if (animationRef.current) clearTimeout(animationRef.current)
         if (soundTimeoutRef.current) clearTimeout(soundTimeoutRef.current)
@@ -369,9 +358,36 @@ function AnimatedTitle({
     startAnimation()
   }, [])
 
+  useEffect(() => {
+    if (userHasInteracted) return
+    const el = tooltipRef.current
+    if (!el) return
+
+    const offset = { x: 15, y: -40 }
+    const apply = (x, y) => {
+      el.style.transform = `translate3d(${x + offset.x}px, ${y + offset.y}px, 0)`
+    }
+
+    const onPointerMove = (e) => apply(e.clientX, e.clientY)
+    const onTouchMove = (e) => {
+      if (e.touches && e.touches[0]) {
+        const t = e.touches[0]
+        apply(t.clientX, t.clientY)
+      }
+    }
+
+    document.addEventListener('pointermove', onPointerMove, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: true })
+
+    return () => {
+      document.removeEventListener('pointermove', onPointerMove)
+      document.removeEventListener('touchmove', onTouchMove)
+    }
+  }, [userHasInteracted])
+
   return (
-    <div className={`animated-title-container ${className}`} style={{ 
-      position: 'relative', 
+    <div className={`animated-title-container ${className}`} style={{
+      position: 'relative',
       display: 'inline-block',
       overflow: 'visible',
       transform: `scale(${responsiveScale})`,
@@ -382,16 +398,16 @@ function AnimatedTitle({
         animate={
           textTraced
             ? {
-                scale: [2, 1.02, 1],
-                transition: {
-                  duration: 1.8,
-                  times: [0, 0.75, 1],
-                  ease: [0.16, 1, 0.3, 1]
-                }
+              scale: [2, 1.02, 1],
+              transition: {
+                duration: 1.8,
+                times: [0, 0.75, 1],
+                ease: [0.16, 1, 0.3, 1]
               }
+            }
             : {}
         }
-        style={{ 
+        style={{
           position: 'relative',
           zIndex: 3,
           opacity: textTraced ? 1 : 0,
@@ -399,10 +415,10 @@ function AnimatedTitle({
           willChange: 'transform'
         }}
       >
-        <h1 
+        <h1
           ref={titleRef}
-          className="game-title" 
-          style={{ 
+          className="game-title"
+          style={{
             position: 'relative',
             zIndex: 3,
             opacity: 1,
@@ -415,8 +431,8 @@ function AnimatedTitle({
           {title}
         </h1>
       </motion.div>
-      
-      <canvas 
+
+      <canvas
         ref={canvasRef}
         style={{
           position: 'absolute',
@@ -427,11 +443,11 @@ function AnimatedTitle({
           pointerEvents: 'none'
         }}
       />
-      
-      <h1 
+
+      <h1
         ref={measureRef}
-        className="game-title" 
-        style={{ 
+        className="game-title"
+        style={{
           position: 'absolute',
           top: '-9999px',
           left: '-9999px',
@@ -446,20 +462,27 @@ function AnimatedTitle({
       >
         {title}
       </h1>
-      
+
       <audio
         key={audioKey}
         ref={audioRef}
         src={sprayPaintSound}
         preload="none"
       />
-      
-      {!userHasInteracted && (
-        <div 
+
+      {/* Render tooltip in a portal; position via transform for zero-lag */}
+      {!userHasInteracted && createPortal(
+        <div
+          ref={tooltipRef}
           style={{
             position: 'fixed',
-            left: `${cursorPosition.x + 15}px`,
-            top: `${cursorPosition.y - 40}px`,
+            left: 0,
+            top: 0,
+            // Start off-screen; JS will move it immediately on first move
+            transform: 'translate3d(-9999px, -9999px, 0)',
+            // Remove transition to avoid trailing
+            transition: 'none',
+            willChange: 'transform',
             background: 'rgba(0, 0, 0, 0.8)',
             color: '#00d9ff',
             padding: '6px 10px',
@@ -468,15 +491,14 @@ function AnimatedTitle({
             fontFamily: 'Arial, sans-serif',
             zIndex: 9999,
             pointerEvents: 'none',
-            transform: 'translate(0, 0)',
-            transition: 'all 0.1s ease-out',
             boxShadow: '0 2px 8px rgba(0, 217, 255, 0.3)',
             border: '1px solid rgba(0, 217, 255, 0.5)',
             whiteSpace: 'nowrap'
           }}
         >
           🔊 Click for sound
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
