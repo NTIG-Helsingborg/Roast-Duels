@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
 
@@ -42,6 +42,9 @@ const TUTORIAL_STEPS = [
 
 function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [modalPosition, setModalPosition] = useState({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+  const [modalScale, setModalScale] = useState(1);
+  const modalRef = useRef(null);
   const { playReload, playGunshot } = useButtonSounds();
 
   useEffect(() => {
@@ -69,7 +72,85 @@ function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
     if (elements.length > 0) {
       const element = elements[0];
       element.classList.add('tutorial-highlight');
+      
+      // Scale down modal for big components
+      const elementRect = element.getBoundingClientRect();
+      const isBigComponent = elementRect.width > 300 || elementRect.height > 100;
+      setModalScale(isBigComponent ? 0.8 : 1);
+      
+      calculateModalPosition(element);
     }
+  };
+
+  const calculateModalPosition = (highlightedElement) => {
+    if (!modalRef.current) return;
+
+    const elementRect = highlightedElement.getBoundingClientRect();
+    const modalRect = modalRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const modalWidth = 600; // Approximate modal width
+    const modalHeight = 400; // Approximate modal height
+    const padding = 20; // Space between modal and highlighted element
+    
+    let newPosition = { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+    
+    // Special positioning for submit button (step 3)
+    if (currentStep === 2) { // Step 3 is index 2
+      // Position modal to the far right of the submit button
+      const rightPosition = viewportWidth - modalWidth - padding;
+      newPosition = {
+        top: `${elementRect.top + (elementRect.height / 2)}px`,
+        left: `${rightPosition}px`,
+        transform: 'translateY(-50%)'
+      };
+    } else {
+      // Check if element is in top half of screen
+    if (elementRect.top < viewportHeight / 2) {
+      // Position modal below the element
+      const topPosition = elementRect.bottom + padding;
+      if (topPosition + modalHeight < viewportHeight) {
+        newPosition = {
+          top: `${topPosition}px`,
+          left: '50%',
+          transform: 'translateX(-50%)'
+        };
+      } else {
+        // If not enough space below, position above
+        const topPosition = elementRect.top - modalHeight - padding;
+        if (topPosition > 0) {
+          newPosition = {
+            top: `${topPosition}px`,
+            left: '50%',
+            transform: 'translateX(-50%)'
+          };
+        }
+      }
+    } else {
+      // Position modal above the element
+      const topPosition = elementRect.top - modalHeight - padding;
+      if (topPosition > 0) {
+        newPosition = {
+          top: `${topPosition}px`,
+          left: '50%',
+          transform: 'translateX(-50%)'
+        };
+      } else {
+        // If not enough space above, position below
+        const topPosition = elementRect.bottom + padding;
+        if (topPosition + modalHeight < viewportHeight) {
+          newPosition = {
+            top: `${topPosition}px`,
+            left: '50%',
+            transform: 'translateX(-50%)'
+          };
+        }
+      }
+    }
+    }
+    
+    setModalPosition(newPosition);
   };
 
   const handleNext = () => {
@@ -110,7 +191,14 @@ function TutorialModal({ isOpen, onClose, gameMode = 'single' }) {
 
   return (
     <div className="modal-overlay tutorial-overlay">
-      <div className="modal-content tutorial-modal">
+      <div 
+        ref={modalRef}
+        className="modal-content tutorial-modal"
+        style={{
+          ...modalPosition,
+          transform: `${modalPosition.transform} scale(${modalScale})`
+        }}
+      >
         <div className="tutorial-header">
           <h2 className="modal-title tutorial-title">
             Welcome to Roast Duels! <span className="custom-fire">🔥</span>
