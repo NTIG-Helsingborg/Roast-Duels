@@ -49,8 +49,6 @@
   top: 1.5rem;
   left: 1.5rem;
   margin-left: 0;
-  
-  z-index: 1001;
 }
 .modal-back-button:hover {
   background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
@@ -440,11 +438,6 @@
 
 .leaderboard-entries::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, var(--spray-magenta) 0%, var(--spray-yellow) 100%);
-}
-
-.leaderboard-entries.recent-tab {
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .leaderboard-entry {
@@ -1718,6 +1711,13 @@ footer p:hover {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-10px); }
   75% { transform: translateX(10px); }
+}
+
+.leaderboard-entries.recent-tab {
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 /* Responsive modal */
