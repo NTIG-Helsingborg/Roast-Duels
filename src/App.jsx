@@ -9,6 +9,7 @@ import MusicPlayer from './components/MusicPlayer'
 import DrawingCanvas from './components/DrawingCanvas'
 import { useButtonSounds } from './components/useButtonSounds'
 import { auth } from './utils/auth'
+import { tutorialUtils } from './utils/tutorial'
 
 function App() {
   const [showGame, setShowGame] = useState(false)
@@ -50,6 +51,11 @@ function App() {
     setShowGame(false);
   }
 
+  const handleReplayTutorial = () => {
+    // Force show tutorial by setting showTutorial state
+    window.dispatchEvent(new CustomEvent('replayTutorial'));
+  }
+
   return (
     <>
       {/* DrawingCanvas with delay only on landing page, muted on game pages */}
@@ -67,13 +73,23 @@ function App() {
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {playerName && (
-                <button
-                  className="back-button"
-                  onClick={handleLogout}
-                  onMouseEnter={playReload}
-                >
-                  Logout
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <button
+                    className="back-button"
+                    onClick={handleLogout}
+                    onMouseEnter={playReload}
+                  >
+                    Logout
+                  </button>
+                  <button
+                    className="back-button"
+                    onClick={handleReplayTutorial}
+                    onMouseEnter={playReload}
+                    style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+                  >
+                    Replay Tutorial
+                  </button>
+                </div>
               )}
               <MuteButton />
             </div>
