@@ -3,7 +3,9 @@ import './Components.css';
 import { useButtonSounds } from './useButtonSounds';
 import LoginModal from './LoginModal';
 import ConfirmUsernameModal from './ConfirmUsernameModal';
+import TutorialModal from './TutorialModal';
 import { auth } from '../utils/auth';
+import { tutorialUtils } from '../utils/tutorial';
 
 const MAX_CHARACTERS = 200;
 
@@ -31,10 +33,11 @@ async function judgeRoast(roastText, userId) {
   }
 }
 
-function GamePanel() {
+function GamePanel({ onBackToLanding }) {
   const [playerName, setPlayerName] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [pendingUsername, setPendingUsername] = useState('');
@@ -42,6 +45,8 @@ function GamePanel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(null);
   const [error, setError] = useState(null);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const { playReload, playGunshot } = useButtonSounds();
 
   useEffect(() => {
@@ -51,15 +56,57 @@ function GamePanel() {
         setPlayerName(data.username);
         setTempName(data.username);
         setShowLoginModal(false);
+        
+        console.log('Checking tutorial for user:', data.username);
+        if (tutorialUtils.isFirstTimeUser()) {
+          console.log('Showing tutorial for first-time user');
+          setShowTutorial(true);
+          tutorialUtils.markVisited();
+        } else {
+          console.log('User has already seen tutorial, skipping');
+        }
       }
     };
     checkAuth();
+
+    const handleReplayTutorial = () => {
+      console.log('Replaying tutorial');
+      setShowTutorial(true);
+    };
+
+    window.addEventListener('replayTutorial', handleReplayTutorial);
+    
+    return () => {
+      window.removeEventListener('replayTutorial', handleReplayTutorial);
+    };
   }, []);
+
+  useEffect(() => {
+    let interval;
+    if (cooldownRemaining > 0) {
+      interval = setInterval(() => {
+        setCooldownRemaining(prev => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [cooldownRemaining]);
 
   const handleLogin = (username) => {
     setPlayerName(username);
     setTempName(username);
     setShowLoginModal(false);
+    
+    if (tutorialUtils.isFirstTimeUser()) {
+      setShowTutorial(true);
+      tutorialUtils.markVisited();
+    }
   };
 
   const handleNameClick = () => {
@@ -118,6 +165,11 @@ function GamePanel() {
       return;
     }
 
+    if (cooldownRemaining > 0) {
+      setError(`Please wait ${cooldownRemaining} seconds before submitting another roast.`);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setScore(null);
@@ -126,6 +178,10 @@ function GamePanel() {
       const userId = auth.getUserId();
       const judgedScore = await judgeRoast(roastText, userId);
       setScore(judgedScore);
+      
+      // Set cooldown after successful submission
+      setLastSubmissionTime(Date.now());
+      setCooldownRemaining(10);
       
       setTimeout(() => {
         playGunshot();
@@ -149,9 +205,13 @@ function GamePanel() {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !isSubmitting) {
+    if (e.key === 'Enter' && !isSubmitting && cooldownRemaining === 0) {
       handleSubmit();
     }
+  };
+
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
   };
 
   const remainingChars = MAX_CHARACTERS - roastText.length;
@@ -163,6 +223,7 @@ function GamePanel() {
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLogin}
+        onBackToLanding={onBackToLanding}
       />
       
       <ConfirmUsernameModal
@@ -171,6 +232,12 @@ function GamePanel() {
         newUsername={pendingUsername}
         onConfirm={handleConfirmUsernameChange}
         onCancel={handleCancelUsernameChange}
+      />
+
+      <TutorialModal
+        isOpen={showTutorial}
+        onClose={handleTutorialClose}
+        gameMode="single"
       />
       
       <div className="component-container game-panel">
@@ -224,9 +291,9 @@ function GamePanel() {
         className="btn-primary"
         onMouseEnter={playReload}
         onClick={handleSubmit}
-        disabled={isSubmitting || !roastText.trim() || isOverLimit}
+        disabled={isSubmitting || !roastText.trim() || isOverLimit || cooldownRemaining > 0}
       >
-        {isSubmitting ? 'Judging...' : 'Submit Roast'}
+        {isSubmitting ? 'Judging...' : cooldownRemaining > 0 ? `Wait ${cooldownRemaining}s` : 'Submit Roast'}
       </button>
 
       {score !== null && (
@@ -241,8 +308,11 @@ function GamePanel() {
             {score}
           </div>
           <div style={{ fontSize: '1rem', opacity: 0.8 }}>
-            {score >= 90 ? '🔥 Legendary!' : 
-             score >= 75 ? '😎 Solid roast!' :
+            {score >= 90 ? (
+              <>
+                <span className="custom-fire">🔥</span> Legendary!
+              </>
+            ) : score >= 75 ? '😎 Solid roast!' :
              score >= 50 ? '👍 Not bad!' :
              score >= 25 ? '😬 Keep practicing...' :
              '💀 Oof...'}
