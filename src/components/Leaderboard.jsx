@@ -21,7 +21,7 @@ const getScoreGradient = (score) => {
 };
 
 function Leaderboard() {
-  const [activeTab, setActiveTab] = useState('all-time');
+  const [activeTab, setActiveTab] = useState('recent');
   const [roasts, setRoasts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
