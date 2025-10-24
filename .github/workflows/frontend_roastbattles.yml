@@ -29,15 +29,11 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: Copy web.config to dist
-        run: |
-          cp web.config dist/
-
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: dist
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,9 +51,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2F823984C8D74FC785E25445F4288EC7 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_31C1A531C26F41BDA10723E5F142BFEB }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7AA6F4C6A55940EFBF78C2D3E5526F74 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B5515DBB1A414ACCA887E1751F22EC71 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1C1C80D1E46745A0885D829B87635516 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BB7C8E4EF89242B99C27276D88CE1461 }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
