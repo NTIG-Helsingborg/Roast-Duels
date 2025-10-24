@@ -13,6 +13,9 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]',
         manualChunks: {
           vendor: ['react', 'react-dom'],
           framer: ['framer-motion']
@@ -22,26 +25,10 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true,
-    headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin'
-    }
+    host: true
   },
   preview: {
     port: 3000,
-    host: true,
-    headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin'
-    }
-  },
-  // Ensure proper MIME types for production
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
-  },
-  // Azure App Service specific configuration
-  esbuild: {
-    target: 'es2020'
+    host: true
   }
 })
