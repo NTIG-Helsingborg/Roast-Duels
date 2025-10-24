@@ -3,10 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts } from './db.js';
-
+import { saveRoast, getTopAllTime, getTopPast7Days, getMostRecent, createUser, getUserByUsername, getUserById, updateUsername, searchRoasts, checkDuplicateRoast, addComment, getCommentsForRoast, toggleLike, getLikeCount, getUserLikeStatus } from './db.js';
+import fs from 'fs';
 dotenv.config();
 
+const profanityList = JSON.parse(fs.readFileSync('./profanity.json', 'utf-8'));
 const app = express();
 const PORT = process.env.PORT || 3001;
 const SALT_ROUNDS = 10; //bcrypt complexity :p
@@ -17,14 +18,11 @@ app.use(cors());
 app.use(express.json());
 
 const containsProfanity = (text) => {
-  const profanityList = [
-    'nigger', 'nigga', 'faggot', 'fag', 'retard', 'chink', 
-    'spic', 'kike', 'cunt', 'tranny', 'negger', 'coon', 'neger'
-  ];
+  const OnlyLettersAndNumbers = text.replace(/[^a-zA-Z0-9]/g, '');
   
   for (const word of profanityList) {
     const regex = new RegExp(`${word}`, 'gi');
-    if (regex.test(text)) {
+    if (regex.test(OnlyLettersAndNumbers)) {
       return true;
     }
   }
@@ -68,6 +66,10 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (/\s/.test(username)) {
     return res.status(400).json({ error: 'Username cannot contain spaces' });
+  }
+
+  if (containsProfanity(username)) {
+    return res.status(400).json({ error: 'Username contains inappropriate language' });
   }
 
   if (password.length < 6) {
@@ -154,6 +156,10 @@ app.put('/api/auth/update-username', authenticateToken, (req, res) => {
     return res.status(400).json({ error: 'Username cannot contain spaces' });
   }
 
+  if (containsProfanity(newUsername)) {
+    return res.status(400).json({ error: 'Username contains inappropriate language' });
+  }
+
   try {
     const user = getUserByUsername(req.user.username);
     const existingUser = getUserByUsername(newUsername);
@@ -183,9 +189,19 @@ app.post('/api/judge-roast', async (req, res) => {
     return res.status(400).json({ error: 'Roast text and user ID are required' });
   }
 
-  // Check for profanity and reject if found
   if (containsProfanity(roastText)) {
     return res.status(400).json({ error: 'Your roast contains inappropriate language and cannot be submitted.' });
+  }
+
+  const duplicateCheck = checkDuplicateRoast(roastText);
+  if (duplicateCheck.isDuplicate) {
+    let errorMessage = 'This roast is too similar to an existing roast. Please be more original!';
+    if (duplicateCheck.type === 'exact') {
+      errorMessage = 'This exact roast has already been submitted. Please be more original!';
+    } else if (duplicateCheck.type === 'similarity') {
+      errorMessage = `This roast is ${Math.round(duplicateCheck.similarity * 100)}% similar to an existing roast. Please be more original!`;
+    }
+    return res.status(400).json({ error: errorMessage });
   }
 
   try {
@@ -220,6 +236,7 @@ SCORING PHILOSOPHY:
 - Use the FULL 0-100 spectrum naturally - no number bias
 - Consider ALL numbers: 23, 34, 47, 56, 67, 78, 89, 91, etc.
 - Vary your scoring patterns completely
+- Non-English or nonsensical roasts score 10-25 regardless of length
 
 SCORING RANGES:
 - 0-25: Terrible execution, unfunny, poorly structured
@@ -309,6 +326,118 @@ app.get('/api/leaderboard/search', (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/comments', authenticateToken, (req, res) => {
+  const { roastId, commentText } = req.body;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId || !commentText || !commentText.trim()) {
+    return res.status(400).json({ error: 'Roast ID and comment text are required' });
+  }
+
+  if (containsProfanity(commentText)) {
+    return res.status(400).json({ error: 'Comment contains inappropriate language' });
+  }
+
+  try {
+    const result = addComment(roastId, userId, commentText.trim());
+    res.json({ 
+      message: 'Comment added successfully',
+      commentId: result.lastInsertRowid 
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+app.get('/api/comments/:roastId', (req, res) => {
+  const { roastId } = req.params;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const comments = getCommentsForRoast(roastId);
+    res.json(comments);
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+app.post('/api/likes/toggle', authenticateToken, (req, res) => {
+  const { roastId } = req.body;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const result = toggleLike(roastId, userId);
+    const likeCount = getLikeCount(roastId);
+    res.json({ 
+      ...result,
+      likeCount 
+    });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
+});
+
+app.get('/api/likes/:roastId', (req, res) => {
+  const { roastId } = req.params;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const likeCount = getLikeCount(roastId);
+    res.json({ likeCount });
+  } catch (error) {
+    console.error('Error fetching like count:', error);
+    res.status(500).json({ error: 'Failed to fetch like count' });
+  }
+});
+
+app.get('/api/likes/:roastId/status', authenticateToken, (req, res) => {
+  const { roastId } = req.params;
+  const user = getUserByUsername(req.user.username);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const userId = user.id;
+
+  if (!roastId) {
+    return res.status(400).json({ error: 'Roast ID is required' });
+  }
+
+  try {
+    const isLiked = getUserLikeStatus(roastId, userId);
+    res.json({ isLiked });
+  } catch (error) {
+    console.error('Error checking like status:', error);
+    res.status(500).json({ error: 'Failed to check like status' });
   }
 });
 

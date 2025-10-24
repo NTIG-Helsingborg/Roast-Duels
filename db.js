@@ -20,8 +20,33 @@ db.exec(`
     user_id INTEGER NOT NULL,
     roast TEXT NOT NULL,
     score INTEGER NOT NULL,
+    likes INTEGER DEFAULT 0,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roast_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    comment_text TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (roast_id) REFERENCES roasts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roast_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (roast_id) REFERENCES roasts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE(roast_id, user_id)
   )
 `);
 
@@ -32,10 +57,16 @@ export const saveRoast = (userId, roast, score) => {
 
 export const getTopAllTime = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
-    ORDER BY r.score DESC, r.date DESC 
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
+    ORDER BY r.score DESC, r.date ASC 
     LIMIT ?
   `);
   return query.all(limit);
@@ -43,11 +74,17 @@ export const getTopAllTime = (limit = 50) => {
 
 export const getTopPast7Days = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
     WHERE r.date >= datetime('now', '-7 days')
-    ORDER BY r.score DESC, r.date DESC 
+    ORDER BY r.score DESC, r.date ASC 
     LIMIT ?
   `);
   return query.all(limit);
@@ -55,9 +92,15 @@ export const getTopPast7Days = (limit = 50) => {
 
 export const getMostRecent = (limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
     ORDER BY r.date DESC 
     LIMIT ?
   `);
@@ -66,9 +109,15 @@ export const getMostRecent = (limit = 50) => {
 
 export const searchRoasts = (searchQuery, limit = 50) => {
   const query = db.prepare(`
-    SELECT r.id, u.username, r.roast, r.score, r.date 
+    SELECT r.id, u.username, r.roast, r.score, r.date, r.likes as likeCount,
+           COALESCE(c.comment_count, 0) as commentCount
     FROM roasts r
     JOIN users u ON r.user_id = u.id
+    LEFT JOIN (
+      SELECT roast_id, COUNT(*) as comment_count 
+      FROM comments 
+      GROUP BY roast_id
+    ) c ON r.id = c.roast_id
     WHERE u.username LIKE ? OR r.roast LIKE ?
     ORDER BY r.score DESC, r.date DESC 
     LIMIT ?
@@ -95,6 +144,165 @@ export const getUserById = (userId) => {
 export const updateUsername = (userId, newUsername) => {
   const query = db.prepare('UPDATE users SET username = ? WHERE id = ?');
   return query.run(newUsername, userId);
+};
+
+export const addComment = (roastId, userId, commentText) => {
+  const query = db.prepare('INSERT INTO comments (roast_id, user_id, comment_text) VALUES (?, ?, ?)');
+  return query.run(roastId, userId, commentText);
+};
+
+export const getCommentsForRoast = (roastId) => {
+  const query = db.prepare(`
+    SELECT c.id, c.comment_text, c.created_at, u.username
+    FROM comments c
+    JOIN users u ON c.user_id = u.id
+    WHERE c.roast_id = ?
+    ORDER BY c.created_at ASC
+  `);
+  return query.all(roastId);
+};
+
+export const toggleLike = (roastId, userId) => {
+  const checkQuery = db.prepare('SELECT id FROM likes WHERE roast_id = ? AND user_id = ?');
+  const existingLike = checkQuery.get(roastId, userId);
+  
+  if (existingLike) {
+    const deleteQuery = db.prepare('DELETE FROM likes WHERE roast_id = ? AND user_id = ?');
+    deleteQuery.run(roastId, userId);
+    return { action: 'unliked', liked: false };
+  } else {
+    const insertQuery = db.prepare('INSERT INTO likes (roast_id, user_id) VALUES (?, ?)');
+    insertQuery.run(roastId, userId);
+    return { action: 'liked', liked: true };
+  }
+};
+
+export const getLikeCount = (roastId) => {
+  const query = db.prepare('SELECT COUNT(*) as count FROM likes WHERE roast_id = ?');
+  const result = query.get(roastId);
+  return result.count;
+};
+
+export const getUserLikeStatus = (roastId, userId) => {
+  const query = db.prepare('SELECT id FROM likes WHERE roast_id = ? AND user_id = ?');
+  const result = query.get(roastId, userId);
+  return !!result;
+};
+
+export const checkDuplicateRoast = (roastText) => {
+  if (roastText.trim().length < 20) {
+    return { isDuplicate: false };
+  }
+
+  const exactQuery = db.prepare('SELECT id FROM roasts WHERE LOWER(roast) = LOWER(?)');
+  const exactMatch = exactQuery.get(roastText);
+  if (exactMatch) {
+    return { isDuplicate: true, type: 'exact' };
+  }
+
+  const normalizedRoast = roastText.toLowerCase().trim();
+  const similarQuery = db.prepare(`
+    SELECT id, roast FROM roasts 
+    WHERE LOWER(TRIM(roast)) = ? AND LENGTH(TRIM(roast)) >= 20
+  `);
+  const similarMatch = similarQuery.get(normalizedRoast);
+  if (similarMatch) {
+    return { isDuplicate: true, type: 'similar', existingRoast: similarMatch.roast };
+  }
+
+  const allRoastsQuery = db.prepare('SELECT id, roast FROM roasts WHERE LENGTH(roast) >= 20 ORDER BY date DESC LIMIT 1000');
+  const allRoasts = allRoastsQuery.all();
+  
+  for (const existingRoast of allRoasts) {
+    const similarity = calculateSimilarity(normalizedRoast, existingRoast.roast.toLowerCase().trim());
+    if (similarity >= 0.9) {
+      return { isDuplicate: true, type: 'similarity', existingRoast: existingRoast.roast, similarity };
+    }
+  }
+
+  return { isDuplicate: false };
+};
+
+const calculateSimilarity = (str1, str2) => {
+  if (str1 === str2) return 1.0;
+  
+  const len1 = str1.length;
+  const len2 = str2.length;
+  
+  if (len1 === 0 || len2 === 0) return 0.0;
+  
+  const longer = len1 > len2 ? str1 : str2;
+  const shorter = len1 > len2 ? str2 : str1;
+  
+  if (longer.length === 0) return 1.0;
+  
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
+};
+
+const levenshteinDistance = (str1, str2) => {
+  const matrix = [];
+  
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+};
+
+export const saveComment = (roastId, userId, username, comment) => {
+  const query = db.prepare('INSERT INTO comments (roast_id, user_id, username, comment) VALUES (?, ?, ?, ?)');
+  return query.run(roastId, userId, username, comment);
+};
+
+export const getCommentsByRoastId = (roastId) => {
+  const query = db.prepare(`
+    SELECT id, username, comment, date 
+    FROM comments 
+    WHERE roast_id = ? 
+    ORDER BY date ASC
+  `);
+  return query.all(roastId);
+};
+
+export const getCommentCountByRoastId = (roastId) => {
+  const query = db.prepare('SELECT COUNT(*) as count FROM comments WHERE roast_id = ?');
+  const result = query.get(roastId);
+  return result ? result.count : 0;
+};
+
+export const incrementLike = (roastId) => {
+  const query = db.prepare('UPDATE roasts SET likes = likes + 1 WHERE id = ?');
+  return query.run(roastId);
+};
+
+export const decrementLike = (roastId) => {
+  const query = db.prepare('UPDATE roasts SET likes = likes - 1 WHERE id = ? AND likes > 0');
+  return query.run(roastId);
+};
+
+export const getLikeCountByRoastId = (roastId) => {
+  const query = db.prepare('SELECT likes FROM roasts WHERE id = ?');
+  const result = query.get(roastId);
+  return result ? result.likes : 0;
 };
 
 export default db;
