@@ -22,10 +22,22 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true
+    host: true,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    }
   },
   preview: {
     port: 3000,
-    host: true
+    host: true,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    }
+  },
+  // Ensure proper MIME types for production
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
   }
 })
